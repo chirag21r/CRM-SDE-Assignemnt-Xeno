@@ -40,7 +40,7 @@ public class SecurityConfig {
                     .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth -> oauth.successHandler((req, res, auth) -> {
-                    res.sendRedirect(frontendUrl + "/#/");
+                    res.sendRedirect(frontendUrl + "/#/?login=1");
                 }))
                 .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
         }

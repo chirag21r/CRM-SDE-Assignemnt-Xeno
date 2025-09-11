@@ -65,6 +65,13 @@ function Login(){
   const [authEnabled, setAuthEnabled] = useState(false)
   useEffect(() => {
     api('/api/public/health').then(h => setAuthEnabled(!!h.authEnabled)).catch(()=>{})
+    // If we land here after OAuth with flag, show toast once and redirect
+    const params = new URLSearchParams(window.location.hash.split('?')[1]||'')
+    const loginFlag = params.get('login') === '1'
+    api('/api/me').then(() => {
+      if (loginFlag && window.showToast) window.showToast('Signed in successfully', 'success')
+      window.location.hash = '#/dashboard'
+    }).catch(()=>{})
   }, [])
   return (
     <Page>
@@ -72,12 +79,20 @@ function Login(){
         <h1 style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</h1>
         <p style={{ color:t.subtext }}>Sign in to continue</p>
         <div>
-          <Button onClick={()=>{ window.location.hash = '#/dashboard' }}>Login with Google</Button>
+          <Button onClick={()=>{
+            if (authEnabled) {
+              window.location.href = 'http://localhost:8081/oauth2/authorization/google'
+            } else {
+              window.location.hash = '#/dashboard'
+            }
+          }}>Login with Google</Button>
         </div>
         {!authEnabled && <p style={{ color:t.subtext }}>Google login not configured. Dev mode enabled.</p>}
-        <div style={{ marginTop:20 }}>
-          <Button onClick={()=>window.location.hash = '#/dashboard'} secondary>Continue (Dev)</Button>
-        </div>
+        {!authEnabled && (
+          <div style={{ marginTop:20 }}>
+            <Button onClick={()=>window.location.hash = '#/dashboard'} secondary>Continue (Dev)</Button>
+          </div>
+        )}
       </div>
     </Page>
   )
@@ -575,11 +590,38 @@ function Sidebar(){
 
 function App(){
   const [route, setRoute] = useState(window.location.hash || '#/')
+  const [toast,setToast]=useState('')
+  // lightweight toast helper
+  window.showToast = (msg, type)=>{ setToast(JSON.stringify({msg, type:type||'info'})); setTimeout(()=>setToast(''), 2500) }
   useEffect(()=>{
     const onHash = () => setRoute(window.location.hash || '#/')
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
+  const [isAuthed,setIsAuthed]=useState(false)
+  const [forceLoggedOut,setForceLoggedOut]=useState(false)
+  const refreshAuth = ()=> api('/api/me').then(()=>{ if(!forceLoggedOut) setIsAuthed(true) }).catch(()=>{ setIsAuthed(false); })
+  useEffect(()=>{ refreshAuth() }, [route])
+  useEffect(()=>{
+    if ((!isAuthed || forceLoggedOut) && isProtected(route)) {
+      window.location.hash = '#/'
+    }
+  }, [isAuthed, forceLoggedOut, route])
+  useEffect(()=>{
+    // ensure no white borders/background
+    document.documentElement.style.background = t.bg
+    document.body.style.background = t.bg
+    document.body.style.margin = '0'
+  }, [])
+  const doLogout = async ()=>{
+    try { await fetch('/logout', { method:'POST', credentials:'include' }) } catch(e) {}
+    setIsAuthed(false)
+    setForceLoggedOut(true)
+    window.location.hash = '#/'
+    setTimeout(()=>{ if (window.showToast) window.showToast('Logged out', 'error') }, 150)
+    setTimeout(()=> setForceLoggedOut(false), 2000)
+  }
+  const isProtected = (r)=> ['#/dashboard','#/customers','#/orders','#/segment','#/create-campaign','#/campaigns','#/ai'].some(p=> (r||'').startsWith(p))
   const dark = { background:t.bg, color:t.text }
   const main = () => {
     if (route==='#/' || route==='#') return <Login />
@@ -596,21 +638,35 @@ function App(){
     <div style={{ ...dark, minHeight:'100vh' }}>
       <header style={{ height:60, padding:'0 20px', background:t.bg, borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</div>
-        <nav style={{ display:'flex', gap:12 }}>
+        <nav style={{ display:'flex', gap:12, alignItems:'center' }}>
           <a href="#/" style={{ color:t.subtext, textDecoration:'none' }}>Login</a>
-          <a href="#/dashboard" style={{ color:t.subtext, textDecoration:'none' }}>Dashboard</a>
+          <a href="#/dashboard" onClick={(e)=>{ if(!isAuthed){ e.preventDefault(); window.location.hash='#/'; if(window.showToast) window.showToast('Please sign in', 'error') } }} style={{ color:t.subtext, textDecoration:'none' }}>Dashboard</a>
+          {isAuthed && (
+            <button onClick={doLogout} style={{ marginLeft:12, background:'transparent', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 12px', cursor:'pointer' }}>Logout</button>
+          )}
         </nav>
       </header>
-      {route==='#/' || route==='#' ? (
-        <Login />
-      ) : (
-        <div style={{ display:'flex' }}>
-          <Sidebar />
-          <div style={{ flex:1 }}>
-            {main()}
-          </div>
+      {toast && (()=>{ const {msg,type} = JSON.parse(toast); const styles = type==='success'
+          ? { bg:'#0f2a17', fg:'#86efac', bd:'#134e21' }
+          : type==='error'
+            ? { bg:'#2a1111', fg:'#fecaca', bd:'#4b1a1a' }
+            : { bg:'#11171e', fg:t.text, bd:t.border };
+        return (
+        <div style={{ position:'fixed', top:14, right:14, background:styles.bg, color:styles.fg, border:`1px solid ${styles.bd}`, borderRadius:10, padding:'10px 14px 10px 12px', boxShadow:'0 8px 18px rgba(0,0,0,0.4)', zIndex:1000, display:'flex', alignItems:'center', gap:10, transition:'all 150ms ease' }}>
+          <div style={{ width:4, alignSelf:'stretch', borderRadius:4, background: type==='success'? '#22c55e' : (type==='error' ? '#ef4444' : '#334155') }} />
+          <div>{msg}</div>
         </div>
-      )}
+        )})()}
+      { (route==='#/' || route==='#' || (isProtected(route) && !isAuthed)) ? (
+          <Login />
+        ) : (
+          <div style={{ display:'flex' }}>
+            <Sidebar />
+            <div style={{ flex:1 }}>
+              {main()}
+            </div>
+          </div>
+        )}
     </div>
   )
 }

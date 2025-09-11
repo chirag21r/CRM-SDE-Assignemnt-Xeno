@@ -21,6 +21,9 @@ Backend - Run locally (12‑factor envs)
    export DB_PASSWORD='your_password'
    export FRONTEND_URL="http://localhost:5173"
    export VENDOR_SUCCESS_RATE=0.9
+   # Google OAuth
+   export GOOGLE_CLIENT_ID="1016567887582-ni0secuvqn25lfa75fuh7f3fo5ngfems.apps.googleusercontent.com"
+   export GOOGLE_CLIENT_SECRET="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"
 3) Build & run
    JAVA_HOME=/path/to/jdk17 PATH=$JAVA_HOME/bin:$PATH ./mvnw -DskipTests package
    java -jar target/crm-xeno-0.0.1-SNAPSHOT.jar --server.port=8081

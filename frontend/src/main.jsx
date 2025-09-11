@@ -265,7 +265,12 @@ function CreateCampaignPage(){
   const [name,setName]=useState('September Offer')
   const [message,setMessage]=useState("Hi {name}, here's 10% off on your next order!")
   useEffect(()=>{ api('/api/segments').then(setSegments).catch(()=>{}) },[])
-  const create = async ()=>{ await api('/api/campaigns',{ method:'POST', body: JSON.stringify({ segmentId, name, message })}); alert('Campaign created and queued'); }
+  const create = async ()=>{ await api('/api/campaigns',{ method:'POST', body: JSON.stringify({ segmentId, name, message })}); alert('Campaign created'); }
+  const createAndSend = async ()=>{
+    const c = await api('/api/campaigns',{ method:'POST', body: JSON.stringify({ segmentId, name, message })});
+    const r = await api(`/api/vendor/send/${c.id}`, { method:'POST' })
+    alert(`Sent: ${r.sent}, Failed: ${r.failed}`)
+  }
   return (
     <Page>
       <Card title="Create Campaign">
@@ -284,7 +289,8 @@ function CreateCampaignPage(){
           <textarea rows={3} value={message} onChange={e=>setMessage(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px' }} />
         </div>
         <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:10 }}>
-          <Button onClick={create}>Create & Queue</Button>
+          <Button onClick={create}>Create</Button>
+          <Button secondary onClick={createAndSend}>Create & Send</Button>
         </div>
       </Card>
     </Page>
@@ -311,13 +317,14 @@ function Dashboard(){
     }).catch(()=>{})
     ;(async()=>{
       const list = await api('/api/campaigns')
-      const top = list.slice(-5)
+      const top = list.slice(-8) // look at a few more recent items
       const cards = await Promise.all(top.map(async c=>{
         const s = await api(`/api/campaigns/${c.id}/stats`)
         const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
         return { id:c.id, name:c.name, pct, sent:s.sent, failed:s.failed, total:s.total }
       }))
-      setCampCards(cards.reverse())
+      const delivered = cards.filter(c => (c.sent + c.failed) > 0)
+      setCampCards(delivered.reverse())
     })()
   },[])
   const last = stats.lastCampaign || {}
@@ -489,18 +496,41 @@ function OrdersPage(){
 }
 
 function CampaignHistoryPage(){
-  const [list,setList]=useState([])
-  useEffect(()=>{ api('/api/campaigns').then(setList) },[])
-  const stats=async(id)=>{ const s=await api(`/api/campaigns/${id}/stats`); alert(`Total ${s.total}, Sent ${s.sent}, Failed ${s.failed}`) }
-  const send=async(id)=>{ const r=await api(`/api/vendor/send/${id}`,{method:'POST'}); alert(`Sent: ${r.sent}, Failed: ${r.failed}`) }
+  const [rows,setRows]=useState([])
+  useEffect(()=>{ (async()=>{
+    const list = await api('/api/campaigns')
+    const withStats = await Promise.all(list.map(async c=>{
+      const s = await api(`/api/campaigns/${c.id}/stats`)
+      const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
+      return { id:c.id, name:c.name, total:s.total, sent:s.sent, failed:s.failed, pct }
+    }))
+    // Show only campaigns that have at least one delivered (sent or failed)
+    setRows(withStats.filter(r => (r.sent + r.failed) > 0).reverse())
+  })() },[])
   return (
     <Page>
       <Card title="Campaign History">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:t.stripe1 }}><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
+          <thead style={{ background:t.stripe1 }}>
+            <tr>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Sent</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Failed</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Total</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Success %</th>
+            </tr>
+          </thead>
           <tbody>
-            {list.slice().reverse().map((c,i)=> (
-              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}><td>{c.id}</td><td>{c.name}</td><td><Button onClick={()=>send(c.id)}>Send</Button><span style={{display:'inline-block',width:8}}/><Button secondary onClick={()=>stats(c.id)}>Stats</Button></td></tr>
+            {rows.map((r,i)=> (
+              <tr key={r.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
+                <td style={{ padding:'10px 8px' }}>{r.id}</td>
+                <td style={{ padding:'10px 8px' }}>{r.name}</td>
+                <td style={{ padding:'10px 8px', color:t.green }}>{r.sent}</td>
+                <td style={{ padding:'10px 8px', color:t.red }}>{r.failed}</td>
+                <td style={{ padding:'10px 8px' }}>{r.total}</td>
+                <td style={{ padding:'10px 8px' }}>{r.pct}%</td>
+              </tr>
             ))}
           </tbody>
         </table>

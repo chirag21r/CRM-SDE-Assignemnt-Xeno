@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend, PieChart, Pie, Cell } from 'recharts'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend } from 'recharts'
 import { createRoot } from 'react-dom/client'
 
 const api = async (path, options={}) => {
@@ -7,6 +7,8 @@ const api = async (path, options={}) => {
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }
+
+const formatINR = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(n||0))
 
 // Black-focused theme with subtle depth
 const t = {
@@ -24,7 +26,7 @@ const t = {
 
 function Page({ children }){
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 24px 28px' }}>
       {children}
     </div>
   )
@@ -54,7 +56,7 @@ function Input({ label, ...props }){
   return (
     <div style={{ display:'flex', flexDirection:'column' }}>
       <small style={{ color:t.subtext, marginBottom:6 }}>{label}</small>
-      <input {...props} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
+      <input {...props} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.15)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:42, fontSize:14 }} />
     </div>
   )
 }
@@ -121,7 +123,7 @@ function Orders(){
               const cid = e.target.value; setCustomerId(cid)
               const found = customers.find(c=> String(c.id)===String(cid))
               setCustomerName(found? found.name : '')
-          }} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+          }} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.15)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:42, fontSize:14 }}>
             <option value="">Select</option>
             {customers.map(c => <option key={c.id} value={c.id}>{c.email}</option>)}
           </select>
@@ -162,7 +164,7 @@ function SegmentBuilder(){
         <Input label="Name" value={name} onChange={e=>setName(e.target.value)} />
         <div style={{ display:'flex', flexDirection:'column' }}>
           <small style={{ color:t.subtext, marginBottom:6 }}>Group Operator</small>
-          <select value={op} onChange={e=>setOp(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+          <select value={op} onChange={e=>setOp(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.15)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:42, fontSize:14 }}>
             <option value="AND">AND</option>
             <option value="OR">OR</option>
           </select>
@@ -172,7 +174,7 @@ function SegmentBuilder(){
         <div key={i} style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr 1fr auto', marginTop:8 }}>
           <div style={{ display:'flex', flexDirection:'column' }}>
             <small style={{ color:t.subtext, marginBottom:6 }}>Field</small>
-            <select value={r.field} onChange={e=>update(i,'field', e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+            <select value={r.field} onChange={e=>update(i,'field', e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.15)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:42, fontSize:14 }}>
               <option value="totalSpend">Total Spend</option>
               <option value="totalVisits">Total Visits</option>
               <option value="inactiveDays">Inactive Days</option>
@@ -180,7 +182,7 @@ function SegmentBuilder(){
           </div>
           <div style={{ display:'flex', flexDirection:'column' }}>
             <small style={{ color:t.subtext, marginBottom:6 }}>Operator</small>
-            <select value={r.operator} onChange={e=>update(i,'operator', e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+            <select value={r.operator} onChange={e=>update(i,'operator', e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.15)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:42, fontSize:14 }}>
               {['>','>=','<','<=','==','!='].map(op=> <option key={op} value={op}>{op}</option>)}
             </select>
           </div>
@@ -270,7 +272,7 @@ function CreateCampaignPage(){
         <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
           <div style={{ display:'flex', flexDirection:'column' }}>
             <small style={{ color:t.subtext, marginBottom:6 }}>Segment</small>
-            <select value={segmentId} onChange={e=>setSegmentId(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+            <select value={segmentId} onChange={e=>setSegmentId(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.15)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:42, fontSize:14 }}>
               <option value="">Select</option>
               {segments.map(s=> <option key={s.id} value={s.id}>{s.name}</option>)}
             </select>
@@ -290,17 +292,23 @@ function CreateCampaignPage(){
 }
 
 function StatCard({label, value}){
-  return <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:20, boxShadow:'0 2px 6px rgba(0,0,0,0.4)' }}>
-    <div style={{ color:t.subtext, fontSize:12, marginBottom:8 }}>{label}</div>
-    <div style={{ fontSize:28, fontWeight:700, color:t.text }}>{value}</div>
+  return <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:22, boxShadow:'0 2px 6px rgba(0,0,0,0.4)' }}>
+    <div style={{ color:t.subtext, fontSize:13, marginBottom:8 }}>{label}</div>
+    <div style={{ fontSize:30, fontWeight:700, color:t.text }}>{value}</div>
   </div>
 }
 
 function Dashboard(){
-  const [stats, setStats] = useState({ totalCustomers:0, totalOrders:0, totalCampaigns:0, lastCampaign:{} })
+  const [stats, setStats] = useState({ totalCustomers:0, totalOrders:0, totalCampaigns:0, lastCampaign:{}, totalIncome:0 })
+  const [derivedIncome,setDerivedIncome]=useState(0)
   const [campCards,setCampCards] = useState([])
   useEffect(()=>{
     api('/api/dashboard/stats').then(setStats).catch(()=>{})
+    // Fallback income computed on frontend (sum of customer totalSpend)
+    api('/api/customers').then(cs=>{
+      const sum = (cs||[]).reduce((acc,c)=> acc + Number(c.totalSpend||0), 0)
+      setDerivedIncome(sum)
+    }).catch(()=>{})
     ;(async()=>{
       const list = await api('/api/campaigns')
       const top = list.slice(-5)
@@ -325,22 +333,7 @@ function Dashboard(){
       <div style={{ display:'grid', gap:20, gridTemplateColumns:'repeat(4, 1fr)', marginBottom:10 }}>
         <StatCard label="Total Customers" value={stats.totalCustomers} />
         <StatCard label="Total Orders" value={stats.totalOrders} />
-        <StatCard label="Campaigns Created" value={stats.totalCampaigns} />
-        <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:20, boxShadow:'0 2px 6px rgba(0,0,0,0.4)' }}>
-          <div style={{ color:t.subtext, fontSize:12, marginBottom:8 }}>Last Campaign</div>
-          <div style={{ width:'100%', height:180 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={lastCampaign} dataKey="value" innerRadius={50} outerRadius={70} paddingAngle={3}>
-                  {lastCampaign.map((entry, idx)=> <Cell key={idx} fill={idx===0? t.green : t.red} />)}
-                </Pie>
-                <RLegend />
-                <RTooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-          <div style={{ marginTop:6, fontSize:12, color:t.subtext, textAlign:'center' }}>{sentPct}% success</div>
-        </div>
+        <StatCard label="Income" value={formatINR((derivedIncome||0) > 0 ? derivedIncome : (stats.totalIncome||0))} />
       </div>
       <Card title="Recent Campaigns">
         <div style={{ margin:'4px 0 14px', height:220 }}>
@@ -471,7 +464,7 @@ function OrdersPage(){
       </Card>
       <Card title="Orders">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}>
+          <thead style={{ background:t.stripe1 }}>
             <tr>
               <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
               <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Customer</th>

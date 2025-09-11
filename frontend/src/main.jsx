@@ -227,12 +227,19 @@ function Campaigns(){
       </div>
       <Card title="History">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
+          <thead style={{ background:'#0c0c0c' }}>
+            <tr>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Actions</th>
+            </tr>
+          </thead>
           <tbody>
             {list.slice().reverse().map((c,i) => (
               <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
-                <td>{c.id}</td><td>{c.name}</td>
-                <td>
+                <td style={{ padding:'10px 8px' }}>{c.id}</td>
+                <td style={{ padding:'10px 8px' }}>{c.name}</td>
+                <td style={{ padding:'10px 8px' }}>
                   <Button onClick={()=>send(c.id)}>Send</Button>
                   <span style={{ display:'inline-block', width:8 }} />
                   <Button secondary onClick={()=>stats(c.id)}>Stats</Button>
@@ -319,11 +326,25 @@ function Dashboard(){
       </div>
       <Card title="Recent Campaigns">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Sent</th><th>Failed</th><th>Total</th><th>Success %</th></tr></thead>
+          <thead style={{ background:'#0c0c0c' }}>
+            <tr>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Sent</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Failed</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Total</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Success %</th>
+            </tr>
+          </thead>
           <tbody>
             {campCards.map((c,i)=> (
               <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
-                <td>{c.id}</td><td>{c.name}</td><td>{c.sent}</td><td>{c.failed}</td><td>{c.total}</td><td>{c.pct}%</td>
+                <td style={{ padding:'10px 8px' }}>{c.id}</td>
+                <td style={{ padding:'10px 8px' }}>{c.name}</td>
+                <td style={{ padding:'10px 8px' }}>{c.sent}</td>
+                <td style={{ padding:'10px 8px' }}>{c.failed}</td>
+                <td style={{ padding:'10px 8px' }}>{c.total}</td>
+                <td style={{ padding:'10px 8px' }}>{c.pct}%</td>
               </tr>
             ))}
           </tbody>
@@ -347,10 +368,26 @@ function CustomersPage(){
       <Customers onSaved={search} />
       <Card title="Customers">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Email</th><th>Spend</th><th>Visits</th><th>Last Active</th></tr></thead>
+          <thead style={{ background:'#0c0c0c' }}>
+            <tr>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Email</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Spend</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Visits</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Last Active</th>
+            </tr>
+          </thead>
           <tbody>
             {rows.map((c,i) => (
-              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}><td>{c.id}</td><td>{c.name}</td><td>{c.email}</td><td>{c.totalSpend||0}</td><td>{c.totalVisits||0}</td><td>{c.lastActiveAt||''}</td></tr>
+              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
+                <td style={{ padding:'10px 8px' }}>{c.id}</td>
+                <td style={{ padding:'10px 8px' }}>{c.name}</td>
+                <td style={{ padding:'10px 8px' }}>{c.email}</td>
+                <td style={{ padding:'10px 8px' }}>{c.totalSpend||0}</td>
+                <td style={{ padding:'10px 8px' }}>{c.totalVisits||0}</td>
+                <td style={{ padding:'10px 8px' }}>{c.lastActiveAt||''}</td>
+              </tr>
             ))}
           </tbody>
         </table>
@@ -362,24 +399,26 @@ function CustomersPage(){
 function OrdersPage(){
   const [customers,setCustomers]=useState([])
   const [customerId,setCustomerId]=useState('')
+  const [selectedName,setSelectedName]=useState('')
   const [amount,setAmount]=useState('500')
   const [rows,setRows]=useState([])
   const load = async ()=>{
-    setCustomers(await api('/api/customers'))
+    const cs = await api('/api/customers'); setCustomers(cs)
     setRows(await api('/api/orders'))
   }
   useEffect(()=>{ load() },[])
-  const save = async ()=>{ await api('/api/orders',{ method:'POST', body: JSON.stringify({ customerId, amount })}); await load() }
+  const save = async ()=>{ await api('/api/orders',{ method:'POST', body: JSON.stringify({ customerId, amount })}); setAmount('500'); await load() }
   return (
     <Page>
       <Card title="Add Order">
         <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
           <div style={{ display:'flex', flexDirection:'column' }}>
-            <small style={{ color:t.subtext, marginBottom:6 }}>Customer</small>
-            <select value={customerId} onChange={e=>setCustomerId(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+            <small style={{ color:t.subtext, marginBottom:6 }}>Customer Email</small>
+            <select value={customerId} onChange={e=>{ const id=e.target.value; setCustomerId(id); const f=customers.find(c=> String(c.id)===String(id)); setSelectedName(f? f.name : '') }} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
               <option value="">Select</option>
-              {customers.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
+              {customers.map(c=> <option key={c.id} value={c.id}>{c.email}</option>)}
             </select>
+            {selectedName && <small style={{ color:t.subtext, marginTop:6 }}>Name: {selectedName}</small>}
           </div>
           <Input label="Amount (₹)" value={amount} onChange={e=>setAmount(e.target.value)} />
         </div>
@@ -389,10 +428,22 @@ function OrdersPage(){
       </Card>
       <Card title="Orders">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Customer</th><th>Amount</th><th>Date</th></tr></thead>
+          <thead style={{ background:'#0c0c0c' }}>
+            <tr>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Customer</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Amount</th>
+              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Date</th>
+            </tr>
+          </thead>
           <tbody>
             {rows.map((o,i) => (
-              <tr key={o.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}><td>{o.id}</td><td>{o.customerName}</td><td>{o.amount}</td><td>{o.date||''}</td></tr>
+              <tr key={o.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
+                <td style={{ padding:'10px 8px' }}>{o.id}</td>
+                <td style={{ padding:'10px 8px' }}>{o.customerName}</td>
+                <td style={{ padding:'10px 8px' }}>{o.amount}</td>
+                <td style={{ padding:'10px 8px' }}>{o.date||''}</td>
+              </tr>
             ))}
           </tbody>
         </table>

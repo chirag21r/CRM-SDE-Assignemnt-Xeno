@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend, PieChart, Pie, Cell } from 'recharts'
 import { createRoot } from 'react-dom/client'
 
 const api = async (path, options={}) => {
@@ -7,20 +8,23 @@ const api = async (path, options={}) => {
   return res.json()
 }
 
-// Black & White theme
+// Black-focused theme with subtle depth
 const t = {
-  bg: '#000000',
-  panel: '#0a0a0a',
-  border: '#1a1a1a',
-  text: '#f5f5f5',
-  subtext: '#9ca3af',
-  stripe1: '#0b0b0b',
-  stripe2: '#0f0f0f'
+  bg: '#0d1117',
+  panel: '#161b22',
+  border: '#1f242d',
+  text: '#e6edf3',
+  subtext: '#8b949e',
+  stripe1: '#0f141a',
+  stripe2: '#121820',
+  hover: '#1b2230',
+  green: '#16a34a',
+  red: '#dc2626'
 }
 
 function Page({ children }){
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: 20 }}>
+    <div style={{ maxWidth: 1200, margin: '0 auto', padding: 24 }}>
       {children}
     </div>
   )
@@ -28,8 +32,8 @@ function Page({ children }){
 
 function Card({ title, children }){
   return (
-    <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:16, margin:'16px 0' }}>
-      <h2 style={{ margin:'0 0 12px', fontSize:18, color:t.text }}>{title}</h2>
+    <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:20, margin:'20px 0', boxShadow:'0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.35)' }}>
+      <h2 style={{ margin:'0 0 14px', fontSize:18, color:t.text, letterSpacing:0.2 }}>{title}</h2>
       {children}
     </div>
   )
@@ -50,7 +54,7 @@ function Input({ label, ...props }){
   return (
     <div style={{ display:'flex', flexDirection:'column' }}>
       <small style={{ color:t.subtext, marginBottom:6 }}>{label}</small>
-      <input {...props} style={{ background:'#0a0a0a', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
+      <input {...props} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
     </div>
   )
 }
@@ -227,7 +231,7 @@ function Campaigns(){
       </div>
       <Card title="History">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}>
+          <thead style={{ background:t.stripe1 }}>
             <tr>
               <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
               <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
@@ -286,9 +290,9 @@ function CreateCampaignPage(){
 }
 
 function StatCard({label, value}){
-  return <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:16 }}>
-    <div style={{ color:t.subtext, fontSize:12 }}>{label}</div>
-    <div style={{ fontSize:24, fontWeight:700, color:t.text }}>{value}</div>
+  return <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:20, boxShadow:'0 2px 6px rgba(0,0,0,0.4)' }}>
+    <div style={{ color:t.subtext, fontSize:12, marginBottom:8 }}>{label}</div>
+    <div style={{ fontSize:28, fontWeight:700, color:t.text }}>{value}</div>
   </div>
 }
 
@@ -310,47 +314,81 @@ function Dashboard(){
   },[])
   const last = stats.lastCampaign || {}
   const sentPct = last.total ? Math.round((last.sent/last.total)*100) : 0
+  const lastCampaign = [
+    { name: 'Sent', value: last.sent || 0 },
+    { name: 'Failed', value: last.failed || 0 }
+  ]
+  const barCards = campCards.slice(0,6)
+  const campaignData = barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
   return (
     <Page>
-      <div style={{ display:'grid', gap:16, gridTemplateColumns:'repeat(4, 1fr)' }}>
+      <div style={{ display:'grid', gap:20, gridTemplateColumns:'repeat(4, 1fr)', marginBottom:10 }}>
         <StatCard label="Total Customers" value={stats.totalCustomers} />
         <StatCard label="Total Orders" value={stats.totalOrders} />
         <StatCard label="Campaigns Created" value={stats.totalCampaigns} />
-        <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:16 }}>
-          <div style={{ color:t.subtext, fontSize:12 }}>Last Campaign Success</div>
-          <div style={{ marginTop:8, height:12, background:'#0f0f0f', borderRadius:8 }}>
-            <div style={{ width:`${sentPct}%`, height:'100%', background:t.text, borderRadius:8 }}></div>
+        <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:20, boxShadow:'0 2px 6px rgba(0,0,0,0.4)' }}>
+          <div style={{ color:t.subtext, fontSize:12, marginBottom:8 }}>Last Campaign</div>
+          <div style={{ width:'100%', height:180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={lastCampaign} dataKey="value" innerRadius={50} outerRadius={70} paddingAngle={3}>
+                  {lastCampaign.map((entry, idx)=> <Cell key={idx} fill={idx===0? t.green : t.red} />)}
+                </Pie>
+                <RLegend />
+                <RTooltip />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <div style={{ marginTop:6, fontSize:12, color:t.subtext }}>{sentPct}% sent</div>
+          <div style={{ marginTop:6, fontSize:12, color:t.subtext, textAlign:'center' }}>{sentPct}% success</div>
         </div>
       </div>
       <Card title="Recent Campaigns">
-        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}>
-            <tr>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Sent</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Failed</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Total</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Success %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {campCards.map((c,i)=> (
-              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
-                <td style={{ padding:'10px 8px' }}>{c.id}</td>
-                <td style={{ padding:'10px 8px' }}>{c.name}</td>
-                <td style={{ padding:'10px 8px' }}>{c.sent}</td>
-                <td style={{ padding:'10px 8px' }}>{c.failed}</td>
-                <td style={{ padding:'10px 8px' }}>{c.total}</td>
-                <td style={{ padding:'10px 8px' }}>{c.pct}%</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div style={{ margin:'4px 0 14px', height:220 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={campaignData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2d333b" />
+              <XAxis dataKey="name" stroke={t.text} tick={{ fontSize: 11 }} />
+              <YAxis stroke={t.text} tick={{ fontSize: 11 }} />
+              <RTooltip />
+              <RLegend />
+              <Bar dataKey="success" fill={t.green} radius={[6,6,0,0]} barSize={28} />
+              <Bar dataKey="failed" fill={t.red} radius={[6,6,0,0]} barSize={28} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <DashboardCampaignTable rows={campCards} />
       </Card>
     </Page>
+  )
+}
+
+function DashboardCampaignTable({ rows }){
+  const [hoverIndex, setHoverIndex] = useState(-1)
+  return (
+    <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+      <thead style={{ background:t.stripe1 }}>
+        <tr>
+          {['ID','Name','Sent','Failed','Total','Success %'].map(h => (
+            <th key={h} style={{ textAlign:'left', padding:'12px 8px', borderBottom:`1px solid ${t.border}`, fontWeight:700 }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r,i)=> (
+          <tr key={r.id}
+              onMouseEnter={()=>setHoverIndex(i)}
+              onMouseLeave={()=>setHoverIndex(-1)}
+              style={{ background: hoverIndex===i? t.hover : (i%2? t.stripe1 : t.stripe2), transition:'background 120ms ease' }}>
+            <td style={{ padding:'10px 8px' }}>{r.id}</td>
+            <td style={{ padding:'10px 8px' }}>{r.name}</td>
+            <td style={{ padding:'10px 8px', color:t.green }}>{r.sent}</td>
+            <td style={{ padding:'10px 8px', color:t.red }}>{r.failed}</td>
+            <td style={{ padding:'10px 8px' }}>{r.total}</td>
+            <td style={{ padding:'10px 8px' }}>{r.pct}%</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 }
 
@@ -362,13 +400,13 @@ function CustomersPage(){
   return (
     <Page>
       <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-        <input placeholder="Search customers" value={q} onChange={e=>setQ(e.target.value)} style={{ flex:1, background:'#0a0a0a', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
+        <input placeholder="Search customers" value={q} onChange={e=>setQ(e.target.value)} style={{ flex:1, background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
         <Button onClick={search}>Search</Button>
       </div>
       <Customers onSaved={search} />
       <Card title="Customers">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}>
+          <thead style={{ background:t.stripe1 }}>
             <tr>
               <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
               <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
@@ -466,7 +504,7 @@ function CampaignHistoryPage(){
     <Page>
       <Card title="Campaign History">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
+          <thead style={{ background:t.stripe1 }}><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
           <tbody>
             {list.slice().reverse().map((c,i)=> (
               <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}><td>{c.id}</td><td>{c.name}</td><td><Button onClick={()=>send(c.id)}>Send</Button><span style={{display:'inline-block',width:8}}/><Button secondary onClick={()=>stats(c.id)}>Stats</Button></td></tr>
@@ -500,7 +538,7 @@ function AISuggestionsPage(){
 function Sidebar(){
   const Item = ({href, label}) => <a href={href} style={{ color:t.text, textDecoration:'none', padding:'12px 14px', display:'block', borderLeft:'3px solid transparent' }}>{label}</a>
   return (
-    <div style={{ width:220, background:'#000000', minHeight:'calc(100vh - 60px)', borderRight:`1px solid ${t.border}` }}>
+    <div style={{ width:220, background:t.bg, minHeight:'calc(100vh - 60px)', borderRight:`1px solid ${t.border}` }}>
       <Item href="#/dashboard" label="Dashboard" />
       <Item href="#/customers" label="Customers" />
       <Item href="#/orders" label="Orders" />
@@ -533,7 +571,7 @@ function App(){
   }
   return (
     <div style={{ ...dark, minHeight:'100vh' }}>
-      <header style={{ height:60, padding:'0 20px', background:'#000', borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+      <header style={{ height:60, padding:'0 20px', background:t.bg, borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</div>
         <nav style={{ display:'flex', gap:12 }}>
           <a href="#/" style={{ color:t.subtext, textDecoration:'none' }}>Login</a>

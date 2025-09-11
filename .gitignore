@@ -1,3 +1,53 @@
+<<<<<<< HEAD
+=======
+# Java / Maven
+target/
+build/
+out/
+dependency-reduced-pom.xml
+*.class
+*.jar
+*.war
+*.ear
+
+# Spring Boot logs
+*.log
+logs/
+crm-xeno/run*.log
+run*.log
+
+# Local JDK downloaded for building
+.jdk/
+
+# IDE / Editor
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Env / secrets
+.env
+.env.*
+
+# Node (safety; not used but common)
+node_modules/
+dist/
+
+# Archives
+*.zip
+
+# Docker local overrides
+docker-compose.override.yml
+
+>>>>>>> d82f4c9 (Seperated Frontend and Backend Files)
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar

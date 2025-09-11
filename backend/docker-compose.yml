@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: xeno_crm
+    ports:
+      - "3307:3306"
+    command: ["mysqld", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--default-authentication-plugin=mysql_native_password"]
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:mysql://db:3306/xeno_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: root
+      DB_PASSWORD: 212004@chiragShukla
+    ports:
+      - "8080:8080"
+

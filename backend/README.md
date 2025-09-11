@@ -10,27 +10,22 @@ Minimal single-server app that covers:
 Tech
 - Java 17, Spring Boot 3.5 (Web, JPA, Security, OAuth2 Client, Validation)
 - MySQL
-- React 18 (Vite)
+- React 18 via CDN in `src/main/resources/static/index.html`
 
-Run locally
-1) Install Java 17
-   sudo apt-get install -y openjdk-17-jdk
-2) Create DB
+Backend - Run locally (12‑factor envs)
+1) Create DB
    CREATE DATABASE xeno_crm;
-3) Configure env (or edit application.properties)
+2) Export env
    export DB_URL="jdbc:mysql://localhost:3306/xeno_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-   export DB_USERNAME=root
-   export DB_PASSWORD=root
-4) Backend
-   cd backend
-   ./mvnw -q -DskipTests package
-   java -jar target/*.jar --server.port=8081
-5) Frontend
-   cd ../frontend
-   cp .env.example .env # optional
-   npm install
-   npm run dev
-   Open http://localhost:5173
+   export DB_USERNAME="root"
+   export DB_PASSWORD='your_password'
+   export FRONTEND_URL="http://localhost:5173"
+   export VENDOR_SUCCESS_RATE=0.9
+3) Build & run
+   JAVA_HOME=/path/to/jdk17 PATH=$JAVA_HOME/bin:$PATH ./mvnw -DskipTests package
+   java -jar target/crm-xeno-0.0.1-SNAPSHOT.jar --server.port=8081
+   Open http://localhost:8081
+
 
 OAuth (optional)
    export GOOGLE_CLIENT_ID=...
@@ -49,10 +44,17 @@ Key APIs
 - POST /api/vendor/receipt { vendorMessageId, status }
 - GET  /api/campaigns/{id}/stats
 
+Frontend - React
+Located at ../frontend
+
+   cd ../frontend && npm install && npm run dev
+   Open http://localhost:5173
+
 Deploy
 - Build: ./mvnw -DskipTests package
-- Run:   java -jar target/*.jar
+- Run:   java -jar target/crm-xeno-0.0.1-SNAPSHOT.jar
 
 Assumptions
 - Rule engine supports numeric comparisons on totalSpend and totalVisits.
 - Vendor send simulates ~90% success.
+

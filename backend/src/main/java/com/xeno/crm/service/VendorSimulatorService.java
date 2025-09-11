@@ -2,7 +2,6 @@ package com.xeno.crm.service;
 
 import com.xeno.crm.model.CommunicationLog;
 import com.xeno.crm.repository.CommunicationLogRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -14,8 +13,10 @@ public class VendorSimulatorService {
     private final CommunicationLogRepository logRepository;
     private final Random random = new Random();
     private final RestTemplate restTemplate;
-    @Value("${server.port:8080}")
+    @org.springframework.beans.factory.annotation.Value("${server.port:8080}")
     private int serverPort;
+    @org.springframework.beans.factory.annotation.Value("${app.vendor.successRate:0.9}")
+    private double successRate;
 
     public VendorSimulatorService(CommunicationLogRepository logRepository, RestTemplate restTemplate) {
         this.logRepository = logRepository;
@@ -24,7 +25,7 @@ public class VendorSimulatorService {
 
     public String sendMessage(CommunicationLog log) {
         // 90% success, 10% failure
-        boolean success = random.nextDouble() < 0.9;
+        boolean success = random.nextDouble() < successRate;
         String vendorId = UUID.randomUUID().toString();
         log.setVendorMessageId(vendorId);
         log.setStatus(success ? CommunicationLog.Status.SENT : CommunicationLog.Status.FAILED);

@@ -1,5 +1,5 @@
-<<<<<<< HEAD
-=======
+## Root .gitignore (cleaned)
+
 # Java / Maven
 target/
 build/
@@ -9,17 +9,18 @@ dependency-reduced-pom.xml
 *.jar
 *.war
 *.ear
+.mvn/wrapper/maven-wrapper.jar
 
 # Spring Boot logs
 *.log
 logs/
-crm-xeno/run*.log
+backend/run*.log
 run*.log
 
-# Local JDK downloaded for building
+# Local JDKs
 .jdk/
 
-# IDE / Editor
+# IDE / Editors
 .idea/
 *.iml
 .classpath
@@ -29,7 +30,7 @@ run*.log
 *.ipr
 *.iws
 
-# OS files
+# OS
 .DS_Store
 Thumbs.db
 
@@ -37,47 +38,17 @@ Thumbs.db
 .env
 .env.*
 
-# Node (safety; not used but common)
+# Node / Vite
+frontend/node_modules/
+frontend/dist/
 node_modules/
 dist/
 
 # Archives
 *.zip
 
-# Docker local overrides
+# Docker override (local only)
 docker-compose.override.yml
 
->>>>>>> d82f4c9 (Seperated Frontend and Backend Files)
+# Misc
 HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/

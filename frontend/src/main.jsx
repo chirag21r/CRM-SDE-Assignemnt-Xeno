@@ -404,7 +404,12 @@ function OrdersPage(){
   const [rows,setRows]=useState([])
   const load = async ()=>{
     const cs = await api('/api/customers'); setCustomers(cs)
-    setRows(await api('/api/orders'))
+    // If a customer is selected, show that customer's orders; else show all
+    if (customerId) {
+      setRows(await api(`/api/orders?customerId=${encodeURIComponent(customerId)}`))
+    } else {
+      setRows(await api('/api/orders'))
+    }
   }
   useEffect(()=>{ load() },[])
   const save = async ()=>{ await api('/api/orders',{ method:'POST', body: JSON.stringify({ customerId, amount })}); setAmount('500'); await load() }
@@ -414,7 +419,7 @@ function OrdersPage(){
         <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
           <div style={{ display:'flex', flexDirection:'column' }}>
             <small style={{ color:t.subtext, marginBottom:6 }}>Customer Email</small>
-            <select value={customerId} onChange={e=>{ const id=e.target.value; setCustomerId(id); const f=customers.find(c=> String(c.id)===String(id)); setSelectedName(f? f.name : '') }} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+            <select value={customerId} onChange={async e=>{ const id=e.target.value; setCustomerId(id); const f=customers.find(c=> String(c.id)===String(id)); setSelectedName(f? f.name : ''); const data = id? await api(`/api/orders?customerId=${encodeURIComponent(id)}`) : await api('/api/orders'); setRows(data) }} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
               <option value="">Select</option>
               {customers.map(c=> <option key={c.id} value={c.id}>{c.email}</option>)}
             </select>

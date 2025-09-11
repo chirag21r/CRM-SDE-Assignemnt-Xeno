@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Xeno Mini CRM</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 0; background: #0b1020; color: #e7ecff; }
+      header { padding: 16px 20px; background: linear-gradient(90deg, #11183a, #0e1330); border-bottom: 1px solid #1a224b; display:flex; justify-content:space-between; align-items:center; }
+      .brand { font-weight:800; letter-spacing:0.5px; }
+      .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+      .card { background: #0e1533; border: 1px solid #1a224b; border-radius: 12px; padding: 20px; margin: 20px 0; }
+      h2 { margin: 0 0 14px; font-size: 18px; }
+      input, select { height: 40px; }
+      input, textarea, select {
+        background:#0c1230; color:#e7ecff; border:1px solid #1a224b; border-radius:8px; padding:8px 10px; width:100%; box-sizing:border-box;
+      }
+      button { background:#4c6fff; color:white; border:0; border-radius:8px; padding:10px 14px; font-weight:600; cursor:pointer; height:40px; }
+      button.secondary { background:#0c1230; border:1px solid #394186; }
+      .grid { display:grid; gap:16px; grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .card .grid > div { display:flex; flex-direction:column; }
+      .row { display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+      small { color:#a5b4ff; display:block; margin-bottom:6px; }
+      table { width:100%; border-collapse: collapse; }
+      th, td { padding:10px 8px; border-bottom: 1px solid #1a224b; text-align:left; }
+      th { color:#c7d2ff; font-weight:600; background: #0b133a; }
+      @media (max-width: 900px) {
+        .grid { grid-template-columns: 1fr; }
+        .row { justify-content:flex-start; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand">Xeno Mini CRM</div>
+      <div><a href="/oauth2/authorization/google"><button class="secondary">Login with Google</button></a></div>
+    </header>
+    <div class="container" id="app"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script>
+      const e = React.createElement;
+      const api = async (path, options={}) => {
+        const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+        if (!res.ok) throw new Error(await res.text());
+        return res.json();
+      };
+
+      function Section({title, children, id}) {
+        return e('div', {className:'card', id}, [e('h2', {key:'h'}, title), children]);
+      }
+
+      function Customers() {
+        const [name, setName] = React.useState('');
+        const [email, setEmail] = React.useState('');
+        const submit = async () => {
+          await api('/api/customers', { method:'POST', body: JSON.stringify({ name, email }) });
+          alert('Customer saved');
+        };
+        return e(Section, {title:'Add Customer', id:'customers'}, [
+          e('div', {className:'grid', key:'g'}, [
+            e('div', {key:1}, [e('small', null, 'Name'), e('input', {value:name, onChange:e=>setName(e.target.value)})]),
+            e('div', {key:2}, [e('small', null, 'Email'), e('input', {value:email, onChange:e=>setEmail(e.target.value)})])
+          ]),
+          e('div', {className:'row', key:'r', style:{marginTop:10}}, [e('button', {onClick:submit}, 'Save')])
+        ]);
+      }
+
+      function Orders() {
+        const [customerId, setCustomerId] = React.useState('');
+        const [amount, setAmount] = React.useState('500');
+        const submit = async () => {
+          await api('/api/orders', { method:'POST', body: JSON.stringify({ customerId, amount }) });
+          alert('Order saved');
+        };
+        return e(Section, {title:'Add Order', id:'orders'}, [
+          e('div', {className:'grid', key:'g'}, [
+            e('div', {key:1}, [e('small', null, 'Customer ID'), e('input', {value:customerId, onChange:e=>setCustomerId(e.target.value)})]),
+            e('div', {key:2}, [e('small', null, 'Amount (₹)'), e('input', {value:amount, onChange:e=>setAmount(e.target.value)})])
+          ]),
+          e('div', {className:'row', key:'r', style:{marginTop:10}}, [e('button', {onClick:submit}, 'Save')])
+        ]);
+      }
+
+      function SegmentBuilder() {
+        const [name, setName] = React.useState('High Spenders');
+        const [rules, setRules] = React.useState([{ field:'totalSpend', operator:'>', value:10000 }]);
+        const [op, setOp] = React.useState('AND');
+        const [segmentId, setSegmentId] = React.useState(null);
+        const [audience, setAudience] = React.useState(null);
+        const addRule = () => setRules([...rules, { field:'inactiveDays', operator:'>', value:90 }]);
+        const updateRule = (idx, key, val) => setRules(rules.map((r,i)=> i===idx? {...r,[key]: key==='value'? Number(val):val } : r));
+        const removeRule = (idx) => setRules(rules.filter((_,i)=> i!==idx));
+        const rule = () => ({ type:'group', op, children: rules.map(r=>({ type:'rule', ...r })) });
+        const save = async () => {
+          const seg = await api('/api/segments', { method:'POST', body: JSON.stringify({ name, ruleJson: JSON.stringify(rule()) }) });
+          setSegmentId(seg.id);
+          const el = document.getElementById('campaigns');
+          if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        const preview = async () => {
+          if (!segmentId) return alert('Save segment first');
+          const res = await api(`/api/segments/${segmentId}/preview-size`);
+          setAudience(res.audienceSize);
+        };
+        return e(Section, {title:'Segment Builder', id:'segments'}, [
+          e('div', {className:'grid', key:'g1'}, [
+            e('div', {key:1}, [e('small', null, 'Name'), e('input', {value:name, onChange:e=>setName(e.target.value)})]),
+            e('div', {key:2}, [e('small', null, 'Group Operator'), e('select', {value:op, onChange:e=>setOp(e.target.value)}, [
+              e('option', {value:'AND'}, 'AND'), e('option', {value:'OR'}, 'OR')
+            ])])
+          ]),
+          e('div', {key:'rules'}, rules.map((r,idx)=> e('div', {key:idx, className:'grid', style:{marginTop:8}}, [
+            e('div', {key:'f'}, [e('small', null, 'Field'), e('select', {value:r.field, onChange:e=>updateRule(idx,'field', e.target.value)}, [
+              e('option', {value:'totalSpend'}, 'Total Spend'),
+              e('option', {value:'totalVisits'}, 'Total Visits'),
+              e('option', {value:'inactiveDays'}, 'Inactive Days'),
+            ])]),
+            e('div', {key:'o'}, [e('small', null, 'Operator'), e('select', {value:r.operator, onChange:e=>updateRule(idx,'operator', e.target.value)}, [
+              e('option', {value:'>'}, '>'), e('option', {value:'>='}, '>='), e('option', {value:'<'}, '<'), e('option', {value:'<='}, '<='), e('option', {value:'=='}, '=='), e('option', {value:'!='}, '!=')
+            ])]),
+            e('div', {key:'v'}, [e('small', null, 'Value'), e('input', {value:r.value, onChange:e=>updateRule(idx,'value', e.target.value)})]),
+            e('div', {key:'x', className:'row'}, [e('button', {className:'secondary', onClick:()=>removeRule(idx)}, 'Remove')])
+          ]))),
+          e('div', {className:'row', key:'add'}, [e('button', {className:'secondary', onClick:addRule}, 'Add Rule')]),
+          e('div', {className:'row', key:'r', style:{marginTop:10}}, [
+            e('button', {onClick:save}, segmentId? 'Saved ✔' : 'Save Segment'),
+            e('button', {className:'secondary', onClick:preview}, 'Preview Audience')
+          ]),
+          audience!=null && e('div', {key:'a', style:{marginTop:8}}, `Audience size: ${audience}`)
+        ]);
+      }
+
+      function Campaigns() {
+        const [segmentId, setSegmentId] = React.useState('');
+        const [name, setName] = React.useState('September Offer');
+        const [message, setMessage] = React.useState("Hi {name}, here's 10% off on your next order!");
+        const [data, setData] = React.useState([]);
+        const load = async () => setData(await api('/api/campaigns'));
+        React.useEffect(() => { load(); }, []);
+        const create = async () => { await api('/api/campaigns', { method:'POST', body: JSON.stringify({ segmentId, name, message }) }); await load(); };
+        const send = async (id) => { const res = await api(`/api/vendor/send/${id}`, { method:'POST' }); alert(`Sent: ${res.sent}, Failed: ${res.failed}`); };
+        const stats = async (id) => { const res = await api(`/api/campaigns/${id}/stats`); alert(`Total ${res.total}, Sent ${res.sent}, Failed ${res.failed}`); };
+        const suggest = async () => {
+          const res = await api('/api/ai/suggest-messages', { method:'POST', body: JSON.stringify({ objective: 'bring back inactive users' }) });
+          setMessage(res.suggestions[0] || message);
+        };
+        return e(Section, {title:'Campaigns', id:'campaigns'}, [
+          e('div', {className:'grid', key:'g'}, [
+            e('div', {key:1}, [e('small', null, 'Segment ID'), e('input', {value:segmentId, onChange:e=>setSegmentId(e.target.value)})]),
+            e('div', {key:2}, [e('small', null, 'Name'), e('input', {value:name, onChange:e=>setName(e.target.value)})])
+          ]),
+          e('div', {key:'m'}, [e('small', null, 'Message'), e('textarea', {rows:3, value:message, onChange:e=>setMessage(e.target.value)})]),
+          e('div', {className:'row', key:'r', style:{marginTop:10}}, [
+            e('button', {onClick:create}, 'Create & Queue'),
+            e('button', {className:'secondary', style:{marginLeft:8}, onClick:suggest}, 'AI Suggest')
+          ]),
+          e('div', {key:'list', className:'card', style:{marginTop:16}}, [
+            e('h2', null, 'History'),
+            e('table', null, [
+              e('thead', null, e('tr', null, [e('th', null, 'ID'), e('th', null, 'Name'), e('th', null, 'Actions')])),
+              e('tbody', null, data.slice().reverse().map(c => e('tr', {key:c.id}, [
+                e('td', null, c.id), e('td', null, c.name), e('td', null, [
+                  e('button', {onClick:() => send(c.id)}, 'Send'),
+                  e('button', {className:'secondary', style:{marginLeft:8}, onClick:() => stats(c.id)}, 'Stats')
+                ])
+              ])))
+            ])
+          ])
+        ]);
+      }
+
+      function App(){
+        return e('div', null, [
+          e(Customers, {key:'c'}),
+          e(Orders, {key:'o'}),
+          e(SegmentBuilder, {key:'s'}),
+          e(Campaigns, {key:'p'})
+        ]);
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('app'));
+      root.render(e(App));
+    </script>
+  </body>
+  </html>
+
+

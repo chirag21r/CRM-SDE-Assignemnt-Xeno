@@ -1,0 +1,52 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.5)
+
+2025-09-10T23:29:20.165+05:30  INFO 193275 --- [crm-xeno] [           main] com.xeno.crm.CrmXenoApplication          : Starting CrmXenoApplication using Java 17.0.11 with PID 193275 (/home/chirag/Desktop/projects/CRM_XENO/crm-xeno/target/classes started by chirag in /home/chirag/Desktop/projects/CRM_XENO/crm-xeno)
+2025-09-10T23:29:20.167+05:30  INFO 193275 --- [crm-xeno] [           main] com.xeno.crm.CrmXenoApplication          : No active profile set, falling back to 1 default profile: "default"
+2025-09-10T23:29:20.690+05:30  INFO 193275 --- [crm-xeno] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-09-10T23:29:20.745+05:30  INFO 193275 --- [crm-xeno] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 48 ms. Found 5 JPA repository interfaces.
+2025-09-10T23:29:21.077+05:30  INFO 193275 --- [crm-xeno] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8081 (http)
+2025-09-10T23:29:21.086+05:30  INFO 193275 --- [crm-xeno] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-09-10T23:29:21.086+05:30  INFO 193275 --- [crm-xeno] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.44]
+2025-09-10T23:29:21.115+05:30  INFO 193275 --- [crm-xeno] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-09-10T23:29:21.116+05:30  INFO 193275 --- [crm-xeno] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 923 ms
+2025-09-10T23:29:21.213+05:30  INFO 193275 --- [crm-xeno] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-09-10T23:29:21.234+05:30  INFO 193275 --- [crm-xeno] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.26.Final
+2025-09-10T23:29:21.255+05:30  INFO 193275 --- [crm-xeno] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-09-10T23:29:21.391+05:30  INFO 193275 --- [crm-xeno] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-09-10T23:29:21.409+05:30  INFO 193275 --- [crm-xeno] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-09-10T23:29:21.510+05:30  INFO 193275 --- [crm-xeno] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2807cf3
+2025-09-10T23:29:21.511+05:30  INFO 193275 --- [crm-xeno] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-09-10T23:29:21.563+05:30  INFO 193275 --- [crm-xeno] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 8.0.42
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-09-10T23:29:22.102+05:30  INFO 193275 --- [crm-xeno] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-09-10T23:29:22.154+05:30  INFO 193275 --- [crm-xeno] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-09-10T23:29:22.466+05:30  WARN 193275 --- [crm-xeno] [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-09-10T23:29:22.483+05:30  INFO 193275 --- [crm-xeno] [           main] o.s.b.a.w.s.WelcomePageHandlerMapping    : Adding welcome page: class path resource [static/index.html]
+2025-09-10T23:29:22.781+05:30  INFO 193275 --- [crm-xeno] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8081 (http) with context path '/'
+2025-09-10T23:29:22.788+05:30  INFO 193275 --- [crm-xeno] [           main] com.xeno.crm.CrmXenoApplication          : Started CrmXenoApplication in 2.925 seconds (process running for 3.086)
+Hibernate: 
+    select
+        count(*) 
+    from
+        customers c1_0
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.5.5:run (default-cli) on project crm-xeno: Process terminated with exit code: 137 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

@@ -77,10 +77,14 @@ function Login(){
   )
 }
 
-function Customers(){
+function Customers({ onSaved }){
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const save = async () => { await api('/api/customers', { method:'POST', body: JSON.stringify({ name, email }) }); alert('Customer saved') }
+  const save = async () => {
+    await api('/api/customers', { method:'POST', body: JSON.stringify({ name, email }) })
+    setName(''); setEmail('')
+    if (onSaved) onSaved()
+  }
   return (
     <Card title="Add Customer">
       <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
@@ -97,11 +101,28 @@ function Customers(){
 function Orders(){
   const [customerId, setCustomerId] = useState('')
   const [amount, setAmount] = useState('500')
-  const save = async () => { await api('/api/orders', { method:'POST', body: JSON.stringify({ customerId, amount }) }); alert('Order saved') }
+  const [customers, setCustomers] = useState([])
+  const [customerName, setCustomerName] = useState('')
+  useEffect(() => { api('/api/customers').then(setCustomers).catch(()=>{}) }, [])
+  const save = async () => {
+    await api('/api/orders', { method:'POST', body: JSON.stringify({ customerId, amount }) })
+    setAmount('500')
+  }
   return (
     <Card title="Add Order">
       <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
-        <Input label="Customer ID" value={customerId} onChange={e=>setCustomerId(e.target.value)} />
+        <div style={{ display:'flex', flexDirection:'column' }}>
+          <small style={{ color:t.subtext, marginBottom:6 }}>Customer Email</small>
+          <select value={customerId} onChange={e=>{
+              const cid = e.target.value; setCustomerId(cid)
+              const found = customers.find(c=> String(c.id)===String(cid))
+              setCustomerName(found? found.name : '')
+          }} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+            <option value="">Select</option>
+            {customers.map(c => <option key={c.id} value={c.id}>{c.email}</option>)}
+          </select>
+          {customerName && <small style={{ color:t.subtext, marginTop:6 }}>Name: {customerName}</small>}
+        </div>
         <Input label="Amount (₹)" value={amount} onChange={e=>setAmount(e.target.value)} />
       </div>
       <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:10 }}>
@@ -266,7 +287,20 @@ function StatCard({label, value}){
 
 function Dashboard(){
   const [stats, setStats] = useState({ totalCustomers:0, totalOrders:0, totalCampaigns:0, lastCampaign:{} })
-  useEffect(()=>{ api('/api/dashboard/stats').then(setStats).catch(()=>{}) },[])
+  const [campCards,setCampCards] = useState([])
+  useEffect(()=>{
+    api('/api/dashboard/stats').then(setStats).catch(()=>{})
+    ;(async()=>{
+      const list = await api('/api/campaigns')
+      const top = list.slice(-5)
+      const cards = await Promise.all(top.map(async c=>{
+        const s = await api(`/api/campaigns/${c.id}/stats`)
+        const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
+        return { id:c.id, name:c.name, pct, sent:s.sent, failed:s.failed, total:s.total }
+      }))
+      setCampCards(cards.reverse())
+    })()
+  },[])
   const last = stats.lastCampaign || {}
   const sentPct = last.total ? Math.round((last.sent/last.total)*100) : 0
   return (
@@ -283,6 +317,18 @@ function Dashboard(){
           <div style={{ marginTop:6, fontSize:12, color:t.subtext }}>{sentPct}% sent</div>
         </div>
       </div>
+      <Card title="Recent Campaigns">
+        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Sent</th><th>Failed</th><th>Total</th><th>Success %</th></tr></thead>
+          <tbody>
+            {campCards.map((c,i)=> (
+              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
+                <td>{c.id}</td><td>{c.name}</td><td>{c.sent}</td><td>{c.failed}</td><td>{c.total}</td><td>{c.pct}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
     </Page>
   )
 }
@@ -298,7 +344,7 @@ function CustomersPage(){
         <input placeholder="Search customers" value={q} onChange={e=>setQ(e.target.value)} style={{ flex:1, background:'#0a0a0a', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
         <Button onClick={search}>Search</Button>
       </div>
-      <Customers />
+      <Customers onSaved={search} />
       <Card title="Customers">
         <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
           <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Email</th><th>Spend</th><th>Visits</th><th>Last Active</th></tr></thead>

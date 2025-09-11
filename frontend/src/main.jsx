@@ -7,6 +7,17 @@ const api = async (path, options={}) => {
   return res.json()
 }
 
+// Black & White theme
+const t = {
+  bg: '#000000',
+  panel: '#0a0a0a',
+  border: '#1a1a1a',
+  text: '#f5f5f5',
+  subtext: '#9ca3af',
+  stripe1: '#0b0b0b',
+  stripe2: '#0f0f0f'
+}
+
 function Page({ children }){
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: 20 }}>
@@ -17,8 +28,8 @@ function Page({ children }){
 
 function Card({ title, children }){
   return (
-    <div style={{ background:'#0e1533', border:'1px solid #1a224b', borderRadius:12, padding:16, margin:'16px 0' }}>
-      <h2 style={{ margin:'0 0 12px', fontSize:18 }}>{title}</h2>
+    <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:16, margin:'16px 0' }}>
+      <h2 style={{ margin:'0 0 12px', fontSize:18, color:t.text }}>{title}</h2>
       {children}
     </div>
   )
@@ -27,7 +38,9 @@ function Card({ title, children }){
 function Button({ children, secondary, ...props }){
   return (
     <button {...props} style={{
-      background: secondary ? '#0c1230' : '#4c6fff', color:'#fff', border: secondary ? '1px solid #394186' : 0,
+      background: secondary ? 'transparent' : t.text,
+      color: secondary ? t.text : '#000',
+      border: secondary ? `1px solid ${t.text}` : 0,
       borderRadius:8, padding:'10px 14px', fontWeight:600, cursor:'pointer', height:40
     }}>{children}</button>
   )
@@ -36,8 +49,8 @@ function Button({ children, secondary, ...props }){
 function Input({ label, ...props }){
   return (
     <div style={{ display:'flex', flexDirection:'column' }}>
-      <small style={{ color:'#a5b4ff', marginBottom:6 }}>{label}</small>
-      <input {...props} style={{ background:'#0c1230', color:'#e7ecff', border:'1px solid #1a224b', borderRadius:8, padding:'8px 10px', height:40 }} />
+      <small style={{ color:t.subtext, marginBottom:6 }}>{label}</small>
+      <input {...props} style={{ background:'#0a0a0a', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
     </div>
   )
 }
@@ -50,15 +63,14 @@ function Login(){
   return (
     <Page>
       <div style={{ textAlign:'center', marginTop:80 }}>
-        <h1 style={{ fontWeight:800, letterSpacing:0.5 }}>Xeno Mini CRM</h1>
-        <p style={{ color:'#a5b4ff' }}>Sign in to continue</p>
-        {authEnabled ? (
-          <a href="/oauth2/authorization/google"><Button>Login with Google</Button></a>
-        ) : (
-          <p style={{ color:'#a5b4ff' }}>Google login not configured. Dev mode enabled.</p>
-        )}
+        <h1 style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</h1>
+        <p style={{ color:t.subtext }}>Sign in to continue</p>
+        <div>
+          <Button onClick={()=>{ window.location.hash = '#/dashboard' }}>Login with Google</Button>
+        </div>
+        {!authEnabled && <p style={{ color:t.subtext }}>Google login not configured. Dev mode enabled.</p>}
         <div style={{ marginTop:20 }}>
-          <Button onClick={()=>window.location.hash = '#/app'} secondary>Continue (Dev)</Button>
+          <Button onClick={()=>window.location.hash = '#/dashboard'} secondary>Continue (Dev)</Button>
         </div>
       </div>
     </Page>
@@ -112,11 +124,11 @@ function SegmentBuilder(){
     const ruleJson = JSON.stringify({ type:'group', op, children: rules.map(r=>({ type:'rule', ...r })) })
     const seg = await api('/api/segments', { method:'POST', body: JSON.stringify({ name, ruleJson }) })
     setSegmentId(seg.id)
-    window.location.hash = '#/app#campaigns'
+    alert('Segment saved. Now preview audience or go create a campaign.')
   }
   const preview = async () => {
-    if (!segmentId) return alert('Save segment first')
-    const res = await api(`/api/segments/${segmentId}/preview-size`)
+    const ruleJson = JSON.stringify({ type:'group', op, children: rules.map(r=>({ type:'rule', ...r })) })
+    const res = await api('/api/segments/preview', { method:'POST', body: JSON.stringify({ ruleJson }) })
     setAudience(res.audienceSize)
   }
   return (
@@ -124,8 +136,8 @@ function SegmentBuilder(){
       <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
         <Input label="Name" value={name} onChange={e=>setName(e.target.value)} />
         <div style={{ display:'flex', flexDirection:'column' }}>
-          <small style={{ color:'#a5b4ff', marginBottom:6 }}>Group Operator</small>
-          <select value={op} onChange={e=>setOp(e.target.value)} style={{ background:'#0c1230', color:'#e7ecff', border:'1px solid #1a224b', borderRadius:8, padding:'8px 10px', height:40 }}>
+          <small style={{ color:t.subtext, marginBottom:6 }}>Group Operator</small>
+          <select value={op} onChange={e=>setOp(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
             <option value="AND">AND</option>
             <option value="OR">OR</option>
           </select>
@@ -134,16 +146,16 @@ function SegmentBuilder(){
       {rules.map((r,i)=> (
         <div key={i} style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr 1fr auto', marginTop:8 }}>
           <div style={{ display:'flex', flexDirection:'column' }}>
-            <small style={{ color:'#a5b4ff', marginBottom:6 }}>Field</small>
-            <select value={r.field} onChange={e=>update(i,'field', e.target.value)} style={{ background:'#0c1230', color:'#e7ecff', border:'1px solid #1a224b', borderRadius:8, padding:'8px 10px', height:40 }}>
+            <small style={{ color:t.subtext, marginBottom:6 }}>Field</small>
+            <select value={r.field} onChange={e=>update(i,'field', e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
               <option value="totalSpend">Total Spend</option>
               <option value="totalVisits">Total Visits</option>
               <option value="inactiveDays">Inactive Days</option>
             </select>
           </div>
           <div style={{ display:'flex', flexDirection:'column' }}>
-            <small style={{ color:'#a5b4ff', marginBottom:6 }}>Operator</small>
-            <select value={r.operator} onChange={e=>update(i,'operator', e.target.value)} style={{ background:'#0c1230', color:'#e7ecff', border:'1px solid #1a224b', borderRadius:8, padding:'8px 10px', height:40 }}>
+            <small style={{ color:t.subtext, marginBottom:6 }}>Operator</small>
+            <select value={r.operator} onChange={e=>update(i,'operator', e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
               {['>','>=','<','<=','==','!='].map(op=> <option key={op} value={op}>{op}</option>)}
             </select>
           </div>
@@ -158,7 +170,10 @@ function SegmentBuilder(){
         <div style={{ flex:1 }} />
         <Button onClick={save}>Save Segment</Button>
         <Button secondary onClick={preview}>Preview Audience</Button>
-        {audience!=null && <span style={{ color:'#a5b4ff', alignSelf:'center' }}>Audience: {audience}</span>}
+        {audience!=null && <span style={{ color:t.subtext, alignSelf:'center' }}>Audience: {audience}</span>}
+      </div>
+      <div style={{ marginTop:10 }}>
+        <Button secondary onClick={()=> window.location.hash = '#/create-campaign'}>Go to Create Campaign</Button>
       </div>
     </Card>
   )
@@ -182,19 +197,19 @@ function Campaigns(){
         <Input label="Name" value={name} onChange={e=>setName(e.target.value)} />
       </div>
       <div style={{ display:'flex', flexDirection:'column', marginTop:10 }}>
-        <small style={{ color:'#a5b4ff', marginBottom:6 }}>Message</small>
-        <textarea rows={3} value={message} onChange={e=>setMessage(e.target.value)} style={{ background:'#0c1230', color:'#e7ecff', border:'1px solid #1a224b', borderRadius:8, padding:'8px 10px' }} />
+        <small style={{ color:t.subtext, marginBottom:6 }}>Message</small>
+        <textarea rows={3} value={message} onChange={e=>setMessage(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px' }} />
       </div>
       <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:10 }}>
         <Button onClick={create}>Create & Queue</Button>
         <Button secondary onClick={suggest}>AI Suggest</Button>
       </div>
       <Card title="History">
-        <table style={{ width:'100%', borderCollapse:'collapse' }}>
-          <thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
+        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
           <tbody>
-            {list.slice().reverse().map(c => (
-              <tr key={c.id}>
+            {list.slice().reverse().map((c,i) => (
+              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
                 <td>{c.id}</td><td>{c.name}</td>
                 <td>
                   <Button onClick={()=>send(c.id)}>Send</Button>
@@ -210,10 +225,42 @@ function Campaigns(){
   )
 }
 
+function CreateCampaignPage(){
+  const [segments,setSegments]=useState([])
+  const [segmentId,setSegmentId]=useState('')
+  const [name,setName]=useState('September Offer')
+  const [message,setMessage]=useState("Hi {name}, here's 10% off on your next order!")
+  useEffect(()=>{ api('/api/segments').then(setSegments).catch(()=>{}) },[])
+  const create = async ()=>{ await api('/api/campaigns',{ method:'POST', body: JSON.stringify({ segmentId, name, message })}); alert('Campaign created and queued'); }
+  return (
+    <Page>
+      <Card title="Create Campaign">
+        <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
+          <div style={{ display:'flex', flexDirection:'column' }}>
+            <small style={{ color:t.subtext, marginBottom:6 }}>Segment</small>
+            <select value={segmentId} onChange={e=>setSegmentId(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
+              <option value="">Select</option>
+              {segments.map(s=> <option key={s.id} value={s.id}>{s.name}</option>)}
+            </select>
+          </div>
+          <Input label="Name" value={name} onChange={e=>setName(e.target.value)} />
+        </div>
+        <div style={{ display:'flex', flexDirection:'column', marginTop:10 }}>
+          <small style={{ color:t.subtext, marginBottom:6 }}>Message</small>
+          <textarea rows={3} value={message} onChange={e=>setMessage(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px' }} />
+        </div>
+        <div style={{ display:'flex', gap:10, justifyContent:'flex-end', marginTop:10 }}>
+          <Button onClick={create}>Create & Queue</Button>
+        </div>
+      </Card>
+    </Page>
+  )
+}
+
 function StatCard({label, value}){
-  return <div style={{ background:'#0e1533', border:'1px solid #1a224b', borderRadius:12, padding:16 }}>
-    <div style={{ color:'#a5b4ff', fontSize:12 }}>{label}</div>
-    <div style={{ fontSize:24, fontWeight:700 }}>{value}</div>
+  return <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:16 }}>
+    <div style={{ color:t.subtext, fontSize:12 }}>{label}</div>
+    <div style={{ fontSize:24, fontWeight:700, color:t.text }}>{value}</div>
   </div>
 }
 
@@ -228,12 +275,12 @@ function Dashboard(){
         <StatCard label="Total Customers" value={stats.totalCustomers} />
         <StatCard label="Total Orders" value={stats.totalOrders} />
         <StatCard label="Campaigns Created" value={stats.totalCampaigns} />
-        <div style={{ background:'#0e1533', border:'1px solid #1a224b', borderRadius:12, padding:16 }}>
-          <div style={{ color:'#a5b4ff', fontSize:12 }}>Last Campaign Success</div>
-          <div style={{ marginTop:8, height:12, background:'#18204a', borderRadius:8 }}>
-            <div style={{ width:`${sentPct}%`, height:'100%', background:'#16a34a', borderRadius:8 }}></div>
+        <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:16 }}>
+          <div style={{ color:t.subtext, fontSize:12 }}>Last Campaign Success</div>
+          <div style={{ marginTop:8, height:12, background:'#0f0f0f', borderRadius:8 }}>
+            <div style={{ width:`${sentPct}%`, height:'100%', background:t.text, borderRadius:8 }}></div>
           </div>
-          <div style={{ marginTop:6, fontSize:12 }}>{sentPct}% sent</div>
+          <div style={{ marginTop:6, fontSize:12, color:t.subtext }}>{sentPct}% sent</div>
         </div>
       </div>
     </Page>
@@ -248,16 +295,16 @@ function CustomersPage(){
   return (
     <Page>
       <div style={{ display:'flex', gap:8, marginBottom:10 }}>
-        <input placeholder="Search customers" value={q} onChange={e=>setQ(e.target.value)} style={{ flex:1, background:'#0c1230', color:'#e7ecff', border:'1px solid #1a224b', borderRadius:8, padding:'8px 10px', height:40 }} />
+        <input placeholder="Search customers" value={q} onChange={e=>setQ(e.target.value)} style={{ flex:1, background:'#0a0a0a', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }} />
         <Button onClick={search}>Search</Button>
       </div>
       <Customers />
       <Card title="Customers">
-        <table style={{ width:'100%', borderCollapse:'collapse' }}>
-          <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Spend</th><th>Visits</th><th>Last Active</th></tr></thead>
+        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Email</th><th>Spend</th><th>Visits</th><th>Last Active</th></tr></thead>
           <tbody>
-            {rows.map(c => (
-              <tr key={c.id}><td>{c.id}</td><td>{c.name}</td><td>{c.email}</td><td>{c.totalSpend||0}</td><td>{c.totalVisits||0}</td><td>{c.lastActiveAt||''}</td></tr>
+            {rows.map((c,i) => (
+              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}><td>{c.id}</td><td>{c.name}</td><td>{c.email}</td><td>{c.totalSpend||0}</td><td>{c.totalVisits||0}</td><td>{c.lastActiveAt||''}</td></tr>
             ))}
           </tbody>
         </table>
@@ -270,38 +317,36 @@ function OrdersPage(){
   const [customers,setCustomers]=useState([])
   const [customerId,setCustomerId]=useState('')
   const [amount,setAmount]=useState('500')
-  const [date,setDate]=useState('')
   const [rows,setRows]=useState([])
   const load = async ()=>{
     setCustomers(await api('/api/customers'))
     setRows(await api('/api/orders'))
   }
   useEffect(()=>{ load() },[])
-  const save = async ()=>{ await api('/api/orders',{ method:'POST', body: JSON.stringify({ customerId, amount, date })}); await load() }
+  const save = async ()=>{ await api('/api/orders',{ method:'POST', body: JSON.stringify({ customerId, amount })}); await load() }
   return (
     <Page>
       <Card title="Add Order">
-        <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr 1fr' }}>
+        <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
           <div style={{ display:'flex', flexDirection:'column' }}>
-            <small style={{ color:'#a5b4ff', marginBottom:6 }}>Customer</small>
-            <select value={customerId} onChange={e=>setCustomerId(e.target.value)} style={{ background:'#0c1230', color:'#e7ecff', border:'1px solid #1a224b', borderRadius:8, padding:'8px 10px', height:40 }}>
+            <small style={{ color:t.subtext, marginBottom:6 }}>Customer</small>
+            <select value={customerId} onChange={e=>setCustomerId(e.target.value)} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
               <option value="">Select</option>
               {customers.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <Input label="Amount (₹)" value={amount} onChange={e=>setAmount(e.target.value)} />
-          <Input label="Date (YYYY-MM-DDTHH:MM)" value={date} onChange={e=>setDate(e.target.value)} />
         </div>
         <div style={{ display:'flex', justifyContent:'flex-end', marginTop:10 }}>
           <Button onClick={save}>Save</Button>
         </div>
       </Card>
       <Card title="Orders">
-        <table style={{ width:'100%', borderCollapse:'collapse' }}>
-          <thead><tr><th>ID</th><th>Customer</th><th>Amount</th><th>Date</th></tr></thead>
+        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Customer</th><th>Amount</th><th>Date</th></tr></thead>
           <tbody>
-            {rows.map(o => (
-              <tr key={o.id}><td>{o.id}</td><td>{o.customerName}</td><td>{o.amount}</td><td>{o.date||''}</td></tr>
+            {rows.map((o,i) => (
+              <tr key={o.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}><td>{o.id}</td><td>{o.customerName}</td><td>{o.amount}</td><td>{o.date||''}</td></tr>
             ))}
           </tbody>
         </table>
@@ -318,11 +363,11 @@ function CampaignHistoryPage(){
   return (
     <Page>
       <Card title="Campaign History">
-        <table style={{ width:'100%', borderCollapse:'collapse' }}>
-          <thead><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
+        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+          <thead style={{ background:'#0c0c0c' }}><tr><th>ID</th><th>Name</th><th>Actions</th></tr></thead>
           <tbody>
-            {list.slice().reverse().map(c=> (
-              <tr key={c.id}><td>{c.id}</td><td>{c.name}</td><td><Button onClick={()=>send(c.id)}>Send</Button><span style={{display:'inline-block',width:8}}/><Button secondary onClick={()=>stats(c.id)}>Stats</Button></td></tr>
+            {list.slice().reverse().map((c,i)=> (
+              <tr key={c.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}><td>{c.id}</td><td>{c.name}</td><td><Button onClick={()=>send(c.id)}>Send</Button><span style={{display:'inline-block',width:8}}/><Button secondary onClick={()=>stats(c.id)}>Stats</Button></td></tr>
             ))}
           </tbody>
         </table>
@@ -343,7 +388,7 @@ function AISuggestionsPage(){
           <div style={{ display:'flex', alignItems:'end' }}><Button onClick={go}>Suggest</Button></div>
         </div>
         <div style={{ display:'grid', gap:12, gridTemplateColumns:'1fr 1fr 1fr', marginTop:12 }}>
-          {suggestions.map((s,i)=> <div key={i} style={{ background:'#0e1533', border:'1px solid #1a224b', borderRadius:12, padding:12 }}>{s}</div>)}
+          {suggestions.map((s,i)=> <div key={i} style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:12 }}>{s}</div>)}
         </div>
       </Card>
     </Page>
@@ -351,15 +396,16 @@ function AISuggestionsPage(){
 }
 
 function Sidebar(){
-  const Item = ({href, label}) => <a href={href} style={{ color:'#e7ecf3', textDecoration:'none', padding:'10px 12px', display:'block' }}>{label}</a>
+  const Item = ({href, label}) => <a href={href} style={{ color:t.text, textDecoration:'none', padding:'12px 14px', display:'block', borderLeft:'3px solid transparent' }}>{label}</a>
   return (
-    <div style={{ width:220, background:'#111111', minHeight:'calc(100vh - 60px)' }}>
-      <Item href="#/dashboard" label="👁 Dashboard" />
-      <Item href="#/customers" label="👥 Customers" />
-      <Item href="#/orders" label="📦 Orders" />
-      <Item href="#/segment" label="📢 Create Segment" />
-      <Item href="#/campaigns" label="🗂 Campaign History" />
-      <Item href="#/ai" label="🤖 AI Suggestions" />
+    <div style={{ width:220, background:'#000000', minHeight:'calc(100vh - 60px)', borderRight:`1px solid ${t.border}` }}>
+      <Item href="#/dashboard" label="Dashboard" />
+      <Item href="#/customers" label="Customers" />
+      <Item href="#/orders" label="Orders" />
+      <Item href="#/segment" label="Create Segment" />
+      <Item href="#/create-campaign" label="Create Campaign" />
+      <Item href="#/campaigns" label="Campaign History" />
+      <Item href="#/ai" label="AI Suggestions" />
     </div>
   )
 }
@@ -371,24 +417,25 @@ function App(){
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
-  const dark = { background:'#0d1117', color:'#e6edf3' }
+  const dark = { background:t.bg, color:t.text }
   const main = () => {
     if (route==='#/' || route==='#') return <Login />
     if (route.startsWith('#/dashboard')) return <Dashboard />
     if (route.startsWith('#/customers')) return <CustomersPage />
     if (route.startsWith('#/orders')) return <OrdersPage />
     if (route.startsWith('#/segment')) return <SegmentBuilder />
+    if (route.startsWith('#/create-campaign')) return <CreateCampaignPage />
     if (route.startsWith('#/campaigns')) return <CampaignHistoryPage />
     if (route.startsWith('#/ai')) return <AISuggestionsPage />
     return <Dashboard />
   }
   return (
     <div style={{ ...dark, minHeight:'100vh' }}>
-      <header style={{ height:60, padding:'0 20px', background:'linear-gradient(90deg, #11183a, #0e1330)', borderBottom:'1px solid #1a224b', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div style={{ fontWeight:800, letterSpacing:0.5 }}>Xeno Mini CRM</div>
+      <header style={{ height:60, padding:'0 20px', background:'#000', borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</div>
         <nav style={{ display:'flex', gap:12 }}>
-          <a href="#/" style={{ color:'#a5b4ff', textDecoration:'none' }}>Login</a>
-          <a href="#/dashboard" style={{ color:'#a5b4ff', textDecoration:'none' }}>Dashboard</a>
+          <a href="#/" style={{ color:t.subtext, textDecoration:'none' }}>Login</a>
+          <a href="#/dashboard" style={{ color:t.subtext, textDecoration:'none' }}>Dashboard</a>
         </nav>
       </header>
       {route==='#/' || route==='#' ? (

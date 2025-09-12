@@ -1,6 +1,8 @@
 package com.xeno.crm.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -16,6 +18,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
@@ -35,13 +38,20 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers(
                         "/", "/index.html", "/assets/**", "/static/**",
-                        "/api/public/**", "/login**"
+                        "/api/public/**", "/api/ai/**", "/login**", "/oauth2/**"
                     ).permitAll()
                     .anyRequest().authenticated()
                 )
-                .oauth2Login(oauth -> oauth.successHandler((req, res, auth) -> {
-                    res.sendRedirect(frontendUrl + "/#/?login=1");
-                }))
+                .oauth2Login(oauth -> oauth
+                    .successHandler((req, res, auth) -> {
+                        res.sendRedirect(frontendUrl + "/#/?login=1");
+                    })
+                    .failureHandler((req, res, ex) -> {
+                        log.error("OAuth2 login failed: {}", ex.getMessage());
+                        String reason = java.net.URLEncoder.encode(String.valueOf(ex.getMessage()), java.nio.charset.StandardCharsets.UTF_8);
+                        res.sendRedirect(frontendUrl + "/#/?login=0&reason=" + reason);
+                    })
+                )
                 .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
         }
         return http.build();

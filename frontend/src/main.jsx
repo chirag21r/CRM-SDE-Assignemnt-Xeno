@@ -75,24 +75,43 @@ function Login(){
   }, [])
   return (
     <Page>
-      <div style={{ textAlign:'center', marginTop:80 }}>
-        <h1 style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</h1>
-        <p style={{ color:t.subtext }}>Sign in to continue</p>
-        <div>
-          <Button onClick={()=>{
-            if (authEnabled) {
-              window.location.href = 'http://localhost:8081/oauth2/authorization/google'
-            } else {
-              window.location.hash = '#/dashboard'
-            }
-          }}>Login with Google</Button>
-        </div>
-        {!authEnabled && <p style={{ color:t.subtext }}>Google login not configured. Dev mode enabled.</p>}
-        {!authEnabled && (
-          <div style={{ marginTop:20 }}>
-            <Button onClick={()=>window.location.hash = '#/dashboard'} secondary>Continue (Dev)</Button>
+      <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'68vh' }}>
+        <div style={{ width:'100%', maxWidth:560 }}>
+          <div style={{
+            background: `linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))`,
+            border:`1px solid ${t.border}`, borderRadius:14, padding:28,
+            boxShadow:'0 10px 30px rgba(0,0,0,0.45)'
+          }}>
+            <div style={{ marginBottom:18 }}>
+              <h1 style={{ margin:0, fontSize:28, fontWeight:800, letterSpacing:0.2, color:t.text }}>Mini CRM</h1>
+              <div style={{ marginTop:6, color:t.subtext, fontSize:14 }}>Minimal CRM for segments, campaigns, and insights.</div>
+            </div>
+            <div style={{ display:'grid', gap:10, margin:'14px 0 18px' }}>
+              <div style={{ color:t.subtext, fontSize:13 }}>- Sign in securely with Google</div>
+              <div style={{ color:t.subtext, fontSize:13 }}>- Create segments with flexible rules</div>
+              <div style={{ color:t.subtext, fontSize:13 }}>- Launch campaigns and track delivery</div>
+            </div>
+            <div style={{ marginTop:10 }}>
+              <button onClick={()=>{
+                if (authEnabled) {
+                  window.location.href = '/oauth2/authorization/google'
+                } else {
+                  window.location.hash = '#/dashboard'
+                }
+              }} style={{
+                width:'100%', height:46, borderRadius:10,
+                background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer'
+              }}>Sign in with Google</button>
+              {!authEnabled && (
+                <div style={{ marginTop:10, display:'flex', gap:10 }}>
+                  <div style={{ color:t.subtext, fontSize:12, flex:1 }}>Google login not configured (dev mode).
+                  </div>
+                  <Button onClick={()=>window.location.hash = '#/dashboard'} secondary>Continue</Button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </Page>
   )
@@ -566,7 +585,11 @@ function AISuggestionsPage(){
           <div style={{ display:'flex', alignItems:'end' }}><Button onClick={go}>Suggest</Button></div>
         </div>
         <div style={{ display:'grid', gap:12, gridTemplateColumns:'1fr 1fr 1fr', marginTop:12 }}>
-          {suggestions.map((s,i)=> <div key={i} style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:12 }}>{s}</div>)}
+          {suggestions.map((s,i)=> (
+            <div key={i} style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:12 }}>
+              {s}
+            </div>
+          ))}
         </div>
       </Card>
     </Page>

@@ -14,8 +14,7 @@ public class Segment {
     @NotBlank
     private String name;
 
-    // JSON of rule tree for simple AND/OR conditions
-    @Lob
+    // JSON of rule tree for simple AND/OR conditions (store as plain TEXT for Postgres)
     @Column(columnDefinition = "TEXT")
     private String ruleJson;
 

@@ -25,10 +25,8 @@ Run locally
    export DB_PASSWORD="<your_password>"
    export FRONTEND_URL="http://localhost:5173"
    export VENDOR_SUCCESS_RATE="0.9"
-   # Google OAuth (optional)
    export GOOGLE_CLIENT_ID="<client_id>"
    export GOOGLE_CLIENT_SECRET="<client_secret>"
-   # Groq AI (optional)
    export GROQ_MODEL_NAME="llama-3.1-8b-instant"
    export GROQ_API_KEY="<groq_api_key>"
 4) Backend (build/run)

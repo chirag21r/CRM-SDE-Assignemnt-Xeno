@@ -58,9 +58,11 @@
 			<version>2.6.0</version>
 		</dependency>
 
+		<!-- PostgreSQL driver (for Neon / Postgres) -->
 		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.7.4</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>

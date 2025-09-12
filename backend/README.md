@@ -1,41 +1,32 @@
-Xeno Mini CRM (Spring Boot + React + MySQL)
+Xeno CRM Backend (Spring Boot)
 
-Minimal single-server app that covers:
-- Ingestion APIs (customers, orders)
-- Segment builder with AND/OR rules + audience preview
-- Campaign creation, simulated delivery, delivery receipts + stats
-- Optional Google OAuth (auto-disabled if not configured)
-- AI message suggestions (offline fallback; can plug OpenAI)
+Overview
+- REST APIs for customers, orders, segments, campaigns, delivery receipts, dashboard stats, and AI suggestions.
+- Security with Spring Security + OAuth2 (Google). Auth auto-disables if GOOGLE_CLIENT_ID is not set.
+- CORS controlled by FRONTEND_URL.
 
-Tech
-- Java 17, Spring Boot 3.5 (Web, JPA, Security, OAuth2 Client, Validation)
-- MySQL
-- React 18 via CDN in `src/main/resources/static/index.html`
+Requirements
+- Java 17
+- MySQL 8+
 
-Backend - Run locally (12‑factor envs)
-1) Create DB
-   CREATE DATABASE xeno_crm;
-2) Export env
-   export DB_URL="jdbc:mysql://localhost:3306/xeno_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
-   export DB_USERNAME="root"
-   export DB_PASSWORD='your_password'
-   export FRONTEND_URL="http://localhost:5173"
-   export VENDOR_SUCCESS_RATE=0.9
-   # Google OAuth
-   export GOOGLE_CLIENT_ID="1016567887582-ni0secuvqn25lfa75fuh7f3fo5ngfems.apps.googleusercontent.com"
-   export GOOGLE_CLIENT_SECRET="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"
-3) Build & run
+Environment variables
+- DB_URL=jdbc:mysql://localhost:3306/xeno_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+- DB_USERNAME=root
+- DB_PASSWORD=<your_password>
+- FRONTEND_URL=http://localhost:5173
+- VENDOR_SUCCESS_RATE=0.9
+- GOOGLE_CLIENT_ID=<optional>
+- GOOGLE_CLIENT_SECRET=<optional>
+- GROQ_MODEL_NAME=llama-3.1-8b-instant
+- GROQ_API_KEY=<optional>
+
+Run locally
+1) Create DB: CREATE DATABASE xeno_crm;
+2) Export envs (above)
+3) Build and run
    JAVA_HOME=/path/to/jdk17 PATH=$JAVA_HOME/bin:$PATH ./mvnw -DskipTests package
    java -jar target/crm-xeno-0.0.1-SNAPSHOT.jar --server.port=8081
-   Open http://localhost:8081
-
-
-OAuth (optional)
-   export GOOGLE_CLIENT_ID=...
-   export GOOGLE_CLIENT_SECRET=...
-
-AI (optional)
-   export OPENAI_API_KEY=...
+   Swagger: http://localhost:8081/swagger-ui/index.html
 
 Key APIs
 - POST /api/customers { name, email }
@@ -46,18 +37,10 @@ Key APIs
 - POST /api/vendor/send/{campaignId}
 - POST /api/vendor/receipt { vendorMessageId, status }
 - GET  /api/campaigns/{id}/stats
+- GET  /api/public/health
 
-Frontend - React
-Located at ../frontend
-
-   cd ../frontend && npm install && npm run dev
-   Open http://localhost:5173
-
-Deploy
-- Build: ./mvnw -DskipTests package
-- Run:   java -jar target/crm-xeno-0.0.1-SNAPSHOT.jar
-
-Assumptions
-- Rule engine supports numeric comparisons on totalSpend and totalVisits.
-- Vendor send simulates ~90% success.
+Notes
+- Rule engine fields: totalSpend, totalVisits, inactiveDays.
+- Vendor simulator success rate configurable via VENDOR_SUCCESS_RATE.
+- Frontend app lives in ../frontend.
 

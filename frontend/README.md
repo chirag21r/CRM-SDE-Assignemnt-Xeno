@@ -1,23 +1,31 @@
 Xeno CRM Frontend (React + Vite)
 
+Overview
+- Minimal dark UI with pages for Login, Dashboard, Customers, Orders, Segment Builder, Create Campaign, Campaign History, AI Suggestions.
+- Uses hash routing and a proxy (/api) to the backend.
+
+Requirements
+- Node 18+
+
 Run locally
-1) Install Node 18+
-2) Copy env and install deps
-   cp .env.example .env
-   npm install
-3) Start dev server (proxies /api to backend)
-   npm run dev
+1) npm install
+2) npm run dev
    Open http://localhost:5173
 
+Environment
+- Defaults to calling /api (proxy to backend at 8081 via vite.config.js)
+- If you deploy, configure rewrites for /api, /oauth2, /login, /logout to the backend URL
+
 Features
-- Login page (uses Google OAuth if configured; dev-continue fallback)
-- Dashboard: Customers, Orders, Segment Builder (AND/OR; inactiveDays), Campaigns
-- Clean dark UI, responsive, simple code suitable for interview explanations
+- Auth: Google OAuth when enabled; dev-continue fallback when disabled
+- Dashboard: stats + compact charts (Recharts) and recent campaigns
+- Customers: add and list with dynamic refresh
+- Orders: add by email (select) and list; backend sets date
+- Segment Builder: AND/OR groups; preview audience without saving
+- Campaigns: Create & Send; history shows only delivered campaigns
+- AI Suggestions: 2–3 short messages; honors explicit percents and audiences
 
-Env
-- `VITE_API_BASE` defaults to `/api` (proxy → backend). Adjust in `.env` if needed
-
-Configure Backend URL
-- Dev proxy is set to http://localhost:8081 in vite.config.js
-- Align backend CORS with `FRONTEND_URL`
+Deployment tips
+- Ensure backend FRONTEND_URL equals the deployed frontend origin
+- Add rewrites for /api and auth endpoints on your static host
 

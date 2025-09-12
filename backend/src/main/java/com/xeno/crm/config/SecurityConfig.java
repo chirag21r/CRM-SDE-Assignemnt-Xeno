@@ -54,12 +54,9 @@ public class SecurityConfig {
                 filterChain.doFilter(request, response);
             }
         }, UsernamePasswordAuthenticationFilter.class);
-        // TEMPORARILY DISABLE ALL AUTH - ALLOW EVERYTHING
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        
-        if (false && !googleEnabled) {
+        if (!googleEnabled) {
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        } else if (false) {
+        } else {
             http
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers(

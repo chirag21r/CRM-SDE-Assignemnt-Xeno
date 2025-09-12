@@ -65,42 +65,16 @@ function Input({ label, ...props }){
 
 function Login(){
   const [authEnabled, setAuthEnabled] = useState(false)
-  const [loading, setLoading] = useState(true)
   useEffect(() => {
-    // Check auth status
-    api('/api/public/health').then(h => setAuthEnabled(!!h.authEnabled)).catch(()=>setAuthEnabled(false))
-    
+    api('/api/public/health').then(h => setAuthEnabled(!!h.authEnabled)).catch(()=>{})
     // If we land here after OAuth with flag, show toast once and redirect
     const params = new URLSearchParams(window.location.hash.split('?')[1]||'')
     const loginFlag = params.get('login') === '1'
-    
-    if (loginFlag) {
-      // Give OAuth some time to complete, then check auth
-      setTimeout(() => {
-        api('/api/me').then(() => {
-          if (window.showToast) window.showToast('Signed in successfully', 'success')
-          window.location.hash = '#/dashboard'
-        }).catch(()=>{
-          console.log('Auth check failed after OAuth')
-          setLoading(false)
-        })
-      }, 1000)
-    } else {
-      api('/api/me').then(() => {
-        window.location.hash = '#/dashboard'
-      }).catch(()=>{
-        setLoading(false)
-      })
-    }
+    api('/api/me').then(() => {
+      if (loginFlag && window.showToast) window.showToast('Signed in successfully', 'success')
+      window.location.hash = '#/dashboard'
+    }).catch(()=>{})
   }, [])
-  
-  if (loading && window.location.hash.includes('login=1')) {
-    return (
-      <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'100vh', background:t.bg, color:t.text }}>
-        <div>Completing sign in...</div>
-      </div>
-    )
-  }
   return (
     <Page>
       <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'68vh' }}>
@@ -654,16 +628,10 @@ function App(){
   const [forceLoggedOut,setForceLoggedOut]=useState(false)
   const refreshAuth = ()=>{
     setAuthChecked(false)
-    // TEMPORARILY SKIP AUTH CHECK - ALWAYS ALLOW ACCESS
-    setIsAuthed(true)
-    setAuthChecked(true)
-    return Promise.resolve()
-    
-    // Original auth check (commented out)
-    // return api('/api/me')
-    //   .then(()=>{ if(!forceLoggedOut) setIsAuthed(true) })
-    //   .catch(()=>{ setIsAuthed(false) })
-    //   .finally(()=> setAuthChecked(true))
+    return api('/api/me')
+      .then(()=>{ if(!forceLoggedOut) setIsAuthed(true) })
+      .catch(()=>{ setIsAuthed(false) })
+      .finally(()=> setAuthChecked(true))
   }
   useEffect(()=>{ refreshAuth() }, [route])
   useEffect(()=>{

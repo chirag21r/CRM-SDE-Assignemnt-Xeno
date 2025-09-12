@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,6 +17,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
 
 import java.util.List;
 
@@ -36,10 +40,18 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
+        return new HttpSessionOAuth2AuthorizationRequestRepository();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         boolean googleEnabled = googleClientId != null && !googleClientId.isBlank();
         http.csrf(csrf -> csrf.disable())
-            .cors(Customizer.withDefaults());
+            .cors(Customizer.withDefaults())
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+            );
         // Lightweight request logger for debugging auth/CORS
         http.addFilterBefore(new OncePerRequestFilter() {
             @Override
@@ -84,6 +96,9 @@ public class SecurityConfig {
                     }, new AntPathRequestMatcher("/api/**"))
                 )
                 .oauth2Login(oauth -> oauth
+                    .authorizationEndpoint(authorization -> 
+                        authorization.authorizationRequestRepository(authorizationRequestRepository())
+                    )
                     .loginPage("/oauth2/authorization/google")
                     .successHandler((req, res, auth) -> {
                         log.info("OAuth2 login successful for user: {}", auth.getName());

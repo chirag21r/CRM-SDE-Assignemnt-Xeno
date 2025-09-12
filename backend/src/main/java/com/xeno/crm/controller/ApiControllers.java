@@ -228,10 +228,12 @@ public class ApiControllers {
 
     // Public health (+auth flag)
     @GetMapping("/public/health")
-    public Map<String, Object> health(@Value("${spring.security.oauth2.client.registration.google.client-id:}") String googleId) {
-        log.debug("GET /api/public/health authEnabled={} frontendUrl={}", (googleId!=null && !googleId.isBlank()), System.getProperty("FRONTEND_URL"));
+    public Map<String, Object> health(@Value("${spring.security.oauth2.client.registration.google.client-id:}") String googleId,
+                                      @Value("${app.frontend.url:}") String frontendUrl) {
         boolean authEnabled = googleId != null && !googleId.isBlank();
-        return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled);
+        log.debug("GET /api/public/health authEnabled={} frontendUrl={} FRONTEND_URL={}", 
+                 authEnabled, frontendUrl, System.getenv("FRONTEND_URL"));
+        return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled, "frontendUrl", frontendUrl);
     }
 
     // Current user (for frontend auth check)

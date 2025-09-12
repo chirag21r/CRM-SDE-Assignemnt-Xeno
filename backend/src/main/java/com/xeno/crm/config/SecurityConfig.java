@@ -30,6 +30,11 @@ public class SecurityConfig {
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    @jakarta.annotation.PostConstruct
+    public void logConfig() {
+        log.info("SecurityConfig initialized with frontendUrl: {}", frontendUrl);
+    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         boolean googleEnabled = googleClientId != null && !googleClientId.isBlank();

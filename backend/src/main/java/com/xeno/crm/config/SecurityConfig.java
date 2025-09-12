@@ -9,6 +9,8 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -40,7 +42,17 @@ public class SecurityConfig {
                         "/", "/index.html", "/assets/**", "/static/**",
                         "/api/public/**", "/api/ai/**", "/login**", "/oauth2/**"
                     ).permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                     .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                    .defaultAuthenticationEntryPointFor((request, response, authException) -> {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        try (java.io.PrintWriter w = response.getWriter()) {
+                            w.write("{\"error\":\"unauthenticated\"}");
+                        }
+                    }, new AntPathRequestMatcher("/api/**"))
                 )
                 .oauth2Login(oauth -> oauth
                     .successHandler((req, res, auth) -> {

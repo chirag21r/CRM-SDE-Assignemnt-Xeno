@@ -624,14 +624,21 @@ function App(){
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
   const [isAuthed,setIsAuthed]=useState(false)
+  const [authChecked,setAuthChecked]=useState(false)
   const [forceLoggedOut,setForceLoggedOut]=useState(false)
-  const refreshAuth = ()=> api('/api/me').then(()=>{ if(!forceLoggedOut) setIsAuthed(true) }).catch(()=>{ setIsAuthed(false); })
+  const refreshAuth = ()=>{
+    setAuthChecked(false)
+    return api('/api/me')
+      .then(()=>{ if(!forceLoggedOut) setIsAuthed(true) })
+      .catch(()=>{ setIsAuthed(false) })
+      .finally(()=> setAuthChecked(true))
+  }
   useEffect(()=>{ refreshAuth() }, [route])
   useEffect(()=>{
-    if ((!isAuthed || forceLoggedOut) && isProtected(route)) {
+    if (authChecked && (!isAuthed || forceLoggedOut) && isProtected(route)) {
       window.location.hash = '#/'
     }
-  }, [isAuthed, forceLoggedOut, route])
+  }, [authChecked, isAuthed, forceLoggedOut, route])
   useEffect(()=>{
     // ensure no white borders/background
     document.documentElement.style.background = t.bg
@@ -682,7 +689,7 @@ function App(){
           <div>{msg}</div>
         </div>
         )})()}
-      { (route==='#/' || route==='#' || (isProtected(route) && !isAuthed)) ? (
+      { (route==='#/' || route==='#' || (isProtected(route) && (!authChecked || !isAuthed))) ? (
           <Login />
         ) : (
           <div style={{ display:'flex' }}>

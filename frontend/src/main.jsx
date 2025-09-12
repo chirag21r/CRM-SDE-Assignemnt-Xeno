@@ -654,10 +654,16 @@ function App(){
   const [forceLoggedOut,setForceLoggedOut]=useState(false)
   const refreshAuth = ()=>{
     setAuthChecked(false)
-    return api('/api/me')
-      .then(()=>{ if(!forceLoggedOut) setIsAuthed(true) })
-      .catch(()=>{ setIsAuthed(false) })
-      .finally(()=> setAuthChecked(true))
+    // TEMPORARILY SKIP AUTH CHECK - ALWAYS ALLOW ACCESS
+    setIsAuthed(true)
+    setAuthChecked(true)
+    return Promise.resolve()
+    
+    // Original auth check (commented out)
+    // return api('/api/me')
+    //   .then(()=>{ if(!forceLoggedOut) setIsAuthed(true) })
+    //   .catch(()=>{ setIsAuthed(false) })
+    //   .finally(()=> setAuthChecked(true))
   }
   useEffect(()=>{ refreshAuth() }, [route])
   useEffect(()=>{

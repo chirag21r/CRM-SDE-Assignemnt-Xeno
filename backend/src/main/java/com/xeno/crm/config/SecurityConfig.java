@@ -54,9 +54,12 @@ public class SecurityConfig {
                 filterChain.doFilter(request, response);
             }
         }, UsernamePasswordAuthenticationFilter.class);
-        if (!googleEnabled) {
+        // TEMPORARILY DISABLE ALL AUTH - ALLOW EVERYTHING
+        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        
+        if (false && !googleEnabled) {
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        } else {
+        } else if (false) {
             http
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers(

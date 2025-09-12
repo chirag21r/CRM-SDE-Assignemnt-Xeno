@@ -5,6 +5,8 @@ import com.xeno.crm.repository.*;
 import com.xeno.crm.service.CampaignService;
 import com.xeno.crm.service.VendorSimulatorService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +16,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api")
 public class ApiControllers {
+    private static final Logger log = LoggerFactory.getLogger(ApiControllers.class);
     private final CustomerRepository customerRepository;
     private final OrderRepository orderRepository;
     private final SegmentRepository segmentRepository;
@@ -38,10 +41,12 @@ public class ApiControllers {
     // 1) Ingestion APIs
     @PostMapping("/customers")
     public Customer createCustomer(@Valid @RequestBody Customer c) {
+        log.debug("POST /api/customers name={} email={}", c.getName(), c.getEmail());
         return customerRepository.save(c);
     }
     @PostMapping("/orders")
     public Order createOrder(@Valid @RequestBody Map<String, Object> body) {
+        log.debug("POST /api/orders body={}", body);
         Long customerId = Long.valueOf(body.get("customerId").toString());
         Double amount = Double.valueOf(body.get("amount").toString());
         Customer c = customerRepository.findById(customerId)
@@ -66,6 +71,7 @@ public class ApiControllers {
     // Lists & search
     @GetMapping("/customers")
     public List<Customer> listCustomers(@RequestParam(name = "search", required = false) String search) {
+        log.debug("GET /api/customers search={}", search);
         List<Customer> all = customerRepository.findAll();
         if (search == null || search.isBlank()) return all;
         String q = search.toLowerCase();
@@ -77,6 +83,7 @@ public class ApiControllers {
 
     @GetMapping("/orders")
     public List<Map<String, Object>> listOrders(@RequestParam(name = "customerId", required = false) Long customerId) {
+        log.debug("GET /api/orders customerId={}", customerId);
         List<Order> orders = orderRepository.findAll();
         return orders.stream()
                 .filter(o -> customerId == null || (o.getCustomer() != null && o.getCustomer().getId().equals(customerId)))
@@ -93,14 +100,17 @@ public class ApiControllers {
     // 2) Segment creation
     @PostMapping("/segments")
     public Segment createSegment(@Valid @RequestBody Segment s) {
+        log.debug("POST /api/segments name={}", s.getName());
         return segmentRepository.save(s);
     }
     @GetMapping("/segments")
     public List<Segment> listSegments() {
+        log.debug("GET /api/segments");
         return segmentRepository.findAll();
     }
     @PostMapping("/segments/preview")
     public Map<String, Object> previewRaw(@RequestBody Map<String, Object> body) {
+        log.debug("POST /api/segments/preview body.keys={}", body.keySet());
         String ruleJson = Objects.toString(body.get("ruleJson"), "");
         List<Customer> customers = customerRepository.findAll();
         com.xeno.crm.service.RuleEvaluator evaluator = new com.xeno.crm.service.RuleEvaluator();
@@ -109,6 +119,7 @@ public class ApiControllers {
     }
     @GetMapping("/segments/{id}/preview-size")
     public Map<String, Object> previewSegment(@PathVariable Long id) {
+        log.debug("GET /api/segments/{}/preview-size", id);
         Segment s = segmentRepository.findById(id).orElseThrow();
         List<Customer> customers = customerRepository.findAll();
         com.xeno.crm.service.RuleEvaluator evaluator = new com.xeno.crm.service.RuleEvaluator();
@@ -119,6 +130,7 @@ public class ApiControllers {
     // 3) Campaign creation/trigger
     @PostMapping("/campaigns")
     public Campaign createCampaign(@RequestBody Map<String, Object> body) {
+        log.debug("POST /api/campaigns body={}", body);
         Long segmentId = Long.valueOf(body.get("segmentId").toString());
         String name = Objects.toString(body.get("name"), "Campaign");
         String message = Objects.toString(body.get("message"), "Hi {name}, here’s 10% off!");
@@ -130,6 +142,7 @@ public class ApiControllers {
     // 3b) Vendor simulate send for PENDING logs
     @PostMapping("/vendor/send/{campaignId}")
     public Map<String, Object> simulateVendor(@PathVariable Long campaignId) {
+        log.debug("POST /api/vendor/send/{}", campaignId);
         List<CommunicationLog> logs = logRepository.findByCampaignId(campaignId);
         int sent = 0, failed = 0;
         for (CommunicationLog log : logs) {
@@ -149,6 +162,7 @@ public class ApiControllers {
     // 3c) Delivery receipt endpoint (vendor calls back)
     @PostMapping("/vendor/receipt")
     public ResponseEntity<?> deliveryReceipt(@RequestBody Map<String, Object> body) {
+        log.debug("POST /api/vendor/receipt body={}", body);
         String vendorId = Objects.toString(body.get("vendorMessageId"), null);
         String status = Objects.toString(body.get("status"), "SENT");
         return logRepository.findByVendorMessageId(vendorId)
@@ -163,6 +177,7 @@ public class ApiControllers {
     // Campaign logs (for details view)
     @GetMapping("/campaigns/{id}/logs")
     public List<Map<String, Object>> campaignLogs(@PathVariable Long id) {
+        log.debug("GET /api/campaigns/{}/logs", id);
         List<CommunicationLog> logs = logRepository.findByCampaignId(id);
         return logs.stream().map(l -> Map.<String, Object>of(
                 "id", l.getId(),
@@ -178,6 +193,7 @@ public class ApiControllers {
     // 4) Simple campaign stats for history page
     @GetMapping("/campaigns/{id}/stats")
     public Map<String, Object> campaignStats(@PathVariable Long id) {
+        log.debug("GET /api/campaigns/{}/stats", id);
         long sent = logRepository.countByCampaignIdAndStatus(id, CommunicationLog.Status.SENT);
         long failed = logRepository.countByCampaignIdAndStatus(id, CommunicationLog.Status.FAILED);
         long total = sent + failed + logRepository.countByCampaignIdAndStatus(id, CommunicationLog.Status.PENDING);
@@ -187,6 +203,7 @@ public class ApiControllers {
     // Dashboard stats
     @GetMapping("/dashboard/stats")
     public Map<String, Object> dashboardStats() {
+        log.debug("GET /api/dashboard/stats");
         long totalCustomers = customerRepository.count();
         long totalOrders = orderRepository.count();
         long totalCampaigns = campaignService.listCampaigns().size();
@@ -212,6 +229,7 @@ public class ApiControllers {
     // Public health (+auth flag)
     @GetMapping("/public/health")
     public Map<String, Object> health(@Value("${spring.security.oauth2.client.registration.google.client-id:}") String googleId) {
+        log.debug("GET /api/public/health authEnabled={} frontendUrl={}", (googleId!=null && !googleId.isBlank()), System.getProperty("FRONTEND_URL"));
         boolean authEnabled = googleId != null && !googleId.isBlank();
         return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled);
     }
@@ -219,6 +237,7 @@ public class ApiControllers {
     // Current user (for frontend auth check)
     @GetMapping("/me")
     public ResponseEntity<?> me(java.security.Principal principal) {
+        log.debug("GET /api/me principal={}", principal!=null? principal.getName(): null);
         if (principal == null) return ResponseEntity.status(401).body(Map.<String, Object>of("error", "unauthenticated"));
         return ResponseEntity.ok(Map.<String, Object>of("name", principal.getName()));
     }

@@ -14,6 +14,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.List;
 
@@ -33,6 +35,25 @@ public class SecurityConfig {
         boolean googleEnabled = googleClientId != null && !googleClientId.isBlank();
         http.csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults());
+        // Lightweight request logger for debugging auth/CORS
+        http.addFilterBefore(new OncePerRequestFilter() {
+            @Override
+            protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request,
+                                           jakarta.servlet.http.HttpServletResponse response,
+                                           jakarta.servlet.FilterChain filterChain)
+                    throws java.io.IOException, jakarta.servlet.ServletException {
+                try {
+                    String path = request.getRequestURI();
+                    if (path.startsWith("/api") || path.startsWith("/login") || path.startsWith("/oauth2")) {
+                        String origin = request.getHeader("Origin");
+                        String referer = request.getHeader("Referer");
+                        String cookie = request.getHeader("Cookie");
+                        log.info("REQ {} {} origin={} referer={} hasCookie={}", request.getMethod(), path, origin, referer, cookie!=null);
+                    }
+                } catch (Exception ignore) {}
+                filterChain.doFilter(request, response);
+            }
+        }, UsernamePasswordAuthenticationFilter.class);
         if (!googleEnabled) {
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         } else {

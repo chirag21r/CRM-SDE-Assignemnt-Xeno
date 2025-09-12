@@ -78,6 +78,9 @@ public class SecurityConfig {
                 )
                 .oauth2Login(oauth -> oauth
                     .successHandler((req, res, auth) -> {
+                        log.info("OAuth2 login successful for user: {}", auth.getName());
+                        // Force session creation
+                        req.getSession(true);
                         res.sendRedirect(frontendUrl + "/#/?login=1");
                     })
                     .failureHandler((req, res, ex) -> {

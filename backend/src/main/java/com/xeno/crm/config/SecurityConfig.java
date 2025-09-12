@@ -77,6 +77,7 @@ public class SecurityConfig {
                     }, new AntPathRequestMatcher("/api/**"))
                 )
                 .oauth2Login(oauth -> oauth
+                    .loginPage("/oauth2/authorization/google")
                     .successHandler((req, res, auth) -> {
                         log.info("OAuth2 login successful for user: {}", auth.getName());
                         // Force session creation

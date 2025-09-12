@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend } from 'recharts'
 import { createRoot } from 'react-dom/client'
 
+const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : ''
+const withBase = (path) => (/^https?:/i.test(path) ? path : `${API_BASE||''}${path}`)
 const api = async (path, options={}) => {
-  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...options })
+  const res = await fetch(withBase(path), { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...options })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }
@@ -94,7 +96,7 @@ function Login(){
             <div style={{ marginTop:10 }}>
               <button onClick={()=>{
                 if (authEnabled) {
-                  window.location.href = '/oauth2/authorization/google'
+                  window.location.href = withBase('/oauth2/authorization/google')
                 } else {
                   window.location.hash = '#/dashboard'
                 }
@@ -637,7 +639,7 @@ function App(){
     document.body.style.margin = '0'
   }, [])
   const doLogout = async ()=>{
-    try { await fetch('/logout', { method:'POST', credentials:'include' }) } catch(e) {}
+    try { await fetch(withBase('/logout'), { method:'POST', credentials:'include' }) } catch(e) {}
     setIsAuthed(false)
     setForceLoggedOut(true)
     window.location.hash = '#/'

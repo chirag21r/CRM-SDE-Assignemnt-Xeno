@@ -53,7 +53,9 @@ public class SecurityConfig {
                         String origin = request.getHeader("Origin");
                         String referer = request.getHeader("Referer");
                         String cookie = request.getHeader("Cookie");
-                        log.info("REQ {} {} origin={} referer={} hasCookie={}", request.getMethod(), path, origin, referer, cookie!=null);
+                        log.info("REQ {} {} origin={} referer={} hasCookie={} cookie={}", 
+                                request.getMethod(), path, origin, referer, cookie!=null, 
+                                cookie != null ? cookie.substring(0, Math.min(100, cookie.length())) + "..." : "null");
                     }
                 } catch (Exception ignore) {}
                 filterChain.doFilter(request, response);

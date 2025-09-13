@@ -1,6 +1,7 @@
 # Xeno Mini CRM
 
 **Live Demo:** https://mini-crm-iqd4.onrender.com
+Please wait for some minutes for site to load.
 
 ## What is this?
 

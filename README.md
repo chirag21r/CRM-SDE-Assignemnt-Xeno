@@ -159,5 +159,3 @@ I intentionally kept the architecture simple for this demo. In a real production
 The codebase is structured to make it easy to add these features later if needed.
 
 ---
-
-Feel free to reach out if you run into any issues or have questions about the implementation!

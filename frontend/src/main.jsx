@@ -122,13 +122,6 @@ function Login(){
                 width:'100%', height:42, borderRadius:10,
                 background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer', fontSize:15
               }}>Sign in</button>
-              {!authEnabled && (
-                <div style={{ marginTop:10, display:'flex', gap:10 }}>
-                  <div style={{ color:t.subtext, fontSize:12, flex:1 }}>Google login not configured (dev mode).
-                  </div>
-                  <Button onClick={()=>window.location.hash = '#/dashboard'} secondary>Continue</Button>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -664,12 +657,12 @@ function App(){
   const [isAuthed,setIsAuthed]=useState(null) // null = checking, false = not authed, true = authed
   
   useEffect(() => {
-    // AUTHENTICATION DISABLED - ALWAYS SET TO AUTHENTICATED
-    console.log('Authentication disabled - always setting to authenticated')
-    setIsAuthed(true)
+    // Check authentication status
+    api('/api/me')
+      .then(() => setIsAuthed(true))
+      .catch(() => setIsAuthed(false))
   }, [])
   
-  // AUTHENTICATION DISABLED - NO OAUTH HANDLING NEEDED
   useEffect(()=>{
     // ensure no white borders/background
     document.documentElement.style.background = t.bg

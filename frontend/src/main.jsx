@@ -1,15 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 
-// Lazy load heavy chart components
-const ResponsiveContainer = lazy(() => import('recharts').then(module => ({ default: module.ResponsiveContainer })))
-const BarChart = lazy(() => import('recharts').then(module => ({ default: module.BarChart })))
-const Bar = lazy(() => import('recharts').then(module => ({ default: module.Bar })))
-const XAxis = lazy(() => import('recharts').then(module => ({ default: module.XAxis })))
-const YAxis = lazy(() => import('recharts').then(module => ({ default: module.YAxis })))
-const CartesianGrid = lazy(() => import('recharts').then(module => ({ default: module.CartesianGrid })))
-const RTooltip = lazy(() => import('recharts').then(module => ({ default: module.Tooltip })))
-const RLegend = lazy(() => import('recharts').then(module => ({ default: module.Legend })))
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend } from 'recharts'
 
 // Lazy load heavy components - will be defined after components
 
@@ -518,7 +510,10 @@ function Dashboard(){
 
   const campaignData = useMemo(() => {
     const barCards = campCards.slice(0,6)
-    return barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
+    const data = barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
+    console.log('Chart data:', { barCards, data, campCards })
+    // Ensure we always have at least one data point for the chart
+    return data.length > 0 ? data : [{ name: 'No Data', success: 0, failed: 0 }]
   }, [campCards])
   return (
     <Page>
@@ -538,33 +533,32 @@ function Dashboard(){
         )}
       </div>
       <Card title="Recent Campaigns">
+        <div style={{ margin:'2px 0 10px', height:200 }}>
+          {campaignsLoading ? (
+            <div className="loading-skeleton" style={{ height: 200, borderRadius: 8 }}></div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={campaignData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2d333b" />
+                <XAxis dataKey="name" stroke={t.text} tick={{ fontSize: 10 }} />
+                <YAxis stroke={t.text} tick={{ fontSize: 10 }} />
+                <RTooltip />
+                <RLegend />
+                <Bar dataKey="success" fill={t.green} radius={[6,6,0,0]} barSize={22} />
+                <Bar dataKey="failed" fill={t.red} radius={[6,6,0,0]} barSize={22} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
         {campaignsLoading ? (
           <div style={{ padding: '20px 0' }}>
-            <div className="loading-skeleton" style={{ height: 200, marginBottom: 20, borderRadius: 8 }}></div>
             <div className="loading-skeleton" style={{ height: 20, marginBottom: 10, borderRadius: 4 }}></div>
             {[1,2,3,4,5].map(i => (
               <div key={i} className="loading-skeleton" style={{ height: 40, marginBottom: 8, borderRadius: 4 }}></div>
             ))}
           </div>
         ) : (
-          <>
-            <div style={{ margin:'2px 0 10px', height:200 }}>
-              <Suspense fallback={<div className="loading-skeleton" style={{ height: 200, borderRadius: 8 }}></div>}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={campaignData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#2d333b" />
-                    <XAxis dataKey="name" stroke={t.text} tick={{ fontSize: 10 }} />
-                    <YAxis stroke={t.text} tick={{ fontSize: 10 }} />
-                    <RTooltip />
-                    <RLegend />
-                    <Bar dataKey="success" fill={t.green} radius={[6,6,0,0]} barSize={22} />
-                    <Bar dataKey="failed" fill={t.red} radius={[6,6,0,0]} barSize={22} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Suspense>
-            </div>
-            <DashboardCampaignTable rows={campCards} />
-          </>
+          <DashboardCampaignTable rows={campCards} />
         )}
       </Card>
     </Page>

@@ -229,10 +229,12 @@ public class ApiControllers {
     // Public health (+auth flag)
     @GetMapping("/public/health")
     public Map<String, Object> health(@Value("${spring.security.oauth2.client.registration.google.client-id:}") String googleId,
+                                      @Value("${spring.security.oauth2.client.registration.google.client-secret:}") String googleSecret,
                                       @Value("${app.frontend.url:}") String frontendUrl) {
-        boolean authEnabled = googleId != null && !googleId.isBlank();
-        log.debug("GET /api/public/health authEnabled={} frontendUrl={} FRONTEND_URL={}", 
-                 authEnabled, frontendUrl, System.getenv("FRONTEND_URL"));
+        boolean authEnabled = googleId != null && !googleId.isBlank() && googleSecret != null && !googleSecret.isBlank();
+        log.debug("GET /api/public/health authEnabled={} frontendUrl={} FRONTEND_URL={} hasClientId={} hasClientSecret={}", 
+                 authEnabled, frontendUrl, System.getenv("FRONTEND_URL"), 
+                 googleId != null && !googleId.isBlank(), googleSecret != null && !googleSecret.isBlank());
         return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled, "frontendUrl", frontendUrl);
     }
 

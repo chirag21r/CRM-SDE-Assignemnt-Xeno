@@ -71,9 +71,10 @@ public class SecurityConfig {
                         String origin = request.getHeader("Origin");
                         String referer = request.getHeader("Referer");
                         String cookie = request.getHeader("Cookie");
-                        log.info("REQ {} {} origin={} referer={} hasCookie={} cookie={}", 
+                        String userAgent = request.getHeader("User-Agent");
+                        log.info("REQ {} {} origin={} referer={} hasCookie={} userAgent={}", 
                                 request.getMethod(), path, origin, referer, cookie!=null, 
-                                cookie != null ? cookie.substring(0, Math.min(100, cookie.length())) + "..." : "null");
+                                userAgent != null ? userAgent.substring(0, Math.min(50, userAgent.length())) + "..." : "null");
                     }
                 } catch (Exception ignore) {}
                 filterChain.doFilter(request, response);
@@ -83,15 +84,15 @@ public class SecurityConfig {
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         } else {
             http
-                .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                        "/", "/index.html", "/assets/**", "/static/**",
-                        "/login**", "/oauth2/**"
-                    ).permitAll()
-                    .requestMatchers("/api/public/**", "/api/ai/**").permitAll()
-                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                    .anyRequest().authenticated()
-                )
+                        .authorizeHttpRequests(auth -> auth
+                            .requestMatchers(
+                                "/", "/index.html", "/assets/**", "/static/**",
+                                "/login**", "/oauth2/**", "/login/oauth2/**"
+                            ).permitAll()
+                            .requestMatchers("/api/public/**", "/api/ai/**").permitAll()
+                            .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                            .anyRequest().authenticated()
+                        )
                 .exceptionHandling(ex -> ex
                     .defaultAuthenticationEntryPointFor((request, response, authException) -> {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

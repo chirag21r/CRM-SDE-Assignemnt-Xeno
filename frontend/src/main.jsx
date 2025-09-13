@@ -99,15 +99,14 @@ function Login(){
             </div>
             <div style={{ marginTop:10 }}>
               <button onClick={()=>{
-                if (authEnabled) {
-                  window.location.href = withBase('/oauth2/authorization/google')
-                } else {
-                  window.location.hash = '#/dashboard'
-                }
+                // ALWAYS REDIRECT TO DASHBOARD FOR TESTING
+                console.log('Sign in clicked - redirecting to dashboard for testing')
+                window.location.hash = '#/dashboard'
+                if (window.showToast) window.showToast('Signed in successfully (testing mode)', 'success')
               }} style={{
                 width:'100%', height:46, borderRadius:10,
                 background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer'
-              }}>Sign in with Google</button>
+              }}>Sign in (Testing Mode)</button>
               {!authEnabled && (
                 <div style={{ marginTop:10, display:'flex', gap:10 }}>
                   <div style={{ color:t.subtext, fontSize:12, flex:1 }}>Google login not configured (dev mode).
@@ -650,15 +649,15 @@ function App(){
   const [isAuthed,setIsAuthed]=useState(null) // null = checking, false = not authed, true = authed
   
   useEffect(() => {
-    // Check auth on page load
+    // Check auth on page load - ALWAYS SET TO AUTHENTICATED FOR TESTING
     api('/api/me')
       .then(userData => {
         console.log('User authenticated:', userData)
         setIsAuthed(true)
       })
       .catch(() => {
-        console.log('User not authenticated')
-        setIsAuthed(false)
+        console.log('API call failed, but setting authenticated for testing')
+        setIsAuthed(true) // ALWAYS SET TO TRUE FOR TESTING
       })
   }, [])
   

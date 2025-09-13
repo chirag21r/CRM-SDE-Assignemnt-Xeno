@@ -80,48 +80,8 @@ public class SecurityConfig {
                 filterChain.doFilter(request, response);
             }
         }, UsernamePasswordAuthenticationFilter.class);
-        if (!googleEnabled) {
-            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        } else {
-            http
-                        .authorizeHttpRequests(auth -> auth
-                            .requestMatchers(
-                                "/", "/index.html", "/assets/**", "/static/**",
-                                "/login**", "/oauth2/**", "/login/oauth2/**"
-                            ).permitAll()
-                            .requestMatchers("/api/public/**", "/api/ai/**").permitAll()
-                            .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                            .anyRequest().authenticated()
-                        )
-                .exceptionHandling(ex -> ex
-                    .defaultAuthenticationEntryPointFor((request, response, authException) -> {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.setContentType("application/json");
-                        try (java.io.PrintWriter w = response.getWriter()) {
-                            w.write("{\"error\":\"unauthenticated\"}");
-                        }
-                    }, new AntPathRequestMatcher("/api/**"))
-                )
-                .oauth2Login(oauth -> oauth
-                    .authorizationEndpoint(authorization -> 
-                        authorization.authorizationRequestRepository(authorizationRequestRepository())
-                    )
-                    .loginPage("/oauth2/authorization/google")
-                    .successHandler((req, res, auth) -> {
-                        log.info("OAuth2 login successful for user: {}", auth.getName());
-                        // Force session creation
-                        var session = req.getSession(true);
-                        log.info("Session created: ID={} isNew={}", session.getId(), session.isNew());
-                        res.sendRedirect(frontendUrl + "/#/?login=1");
-                    })
-                    .failureHandler((req, res, ex) -> {
-                        log.error("OAuth2 login failed: {}", ex.getMessage());
-                        String reason = java.net.URLEncoder.encode(String.valueOf(ex.getMessage()), java.nio.charset.StandardCharsets.UTF_8);
-                        res.sendRedirect(frontendUrl + "/#/?login=0&reason=" + reason);
-                    })
-                )
-                .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
-        }
+        // DISABLE AUTHENTICATION FOR TESTING - Allow all requests
+        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();
     }
 

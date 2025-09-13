@@ -228,24 +228,23 @@ public class ApiControllers {
 
     // Public health (+auth flag)
     @GetMapping("/public/health")
-    public Map<String, Object> health(@Value("${spring.security.oauth2.client.registration.google.client-id:}") String googleId,
-                                      @Value("${spring.security.oauth2.client.registration.google.client-secret:}") String googleSecret,
+    public Map<String, Object> health(@Value("${GOOGLE_CLIENT_ID:}") String googleId,
+                                      @Value("${GOOGLE_CLIENT_SECRET:}") String googleSecret,
                                       @Value("${app.frontend.url:}") String frontendUrl) {
-        boolean authEnabled = googleId != null && !googleId.isBlank() && googleSecret != null && !googleSecret.isBlank();
+        // AUTHENTICATION COMPLETELY DISABLED
+        boolean authEnabled = false;
         log.debug("GET /api/public/health authEnabled={} frontendUrl={} hasClientId={} hasClientSecret={}", 
                  authEnabled, frontendUrl, 
                  googleId != null && !googleId.isBlank(), googleSecret != null && !googleSecret.isBlank());
         return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled, "frontendUrl", frontendUrl);
     }
 
-    // Current user (for frontend auth check)
+    // Current user (for frontend auth check) - ALWAYS RETURNS AUTHENTICATED
     @GetMapping("/me")
     public ResponseEntity<?> me(java.security.Principal principal) {
-        log.debug("GET /api/me principal={}", principal!=null? principal.getName(): null);
-        if (principal == null) {
-            return ResponseEntity.status(401).body(Map.<String, Object>of("error", "unauthenticated"));
-        }
-        return ResponseEntity.ok(Map.<String, Object>of("name", principal.getName()));
+        log.debug("GET /api/me - AUTHENTICATION DISABLED - ALWAYS RETURNS AUTHENTICATED USER");
+        // Always return authenticated user (no authentication required)
+        return ResponseEntity.ok(Map.<String, Object>of("name", "authenticated-user"));
     }
 }
 

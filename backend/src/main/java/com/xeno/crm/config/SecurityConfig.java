@@ -29,10 +29,10 @@ import java.util.List;
 public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
+    @Value("${GOOGLE_CLIENT_ID:}")
     private String googleClientId;
     
-    @Value("${spring.security.oauth2.client.registration.google.client-secret:}")
+    @Value("${GOOGLE_CLIENT_SECRET:}")
     private String googleClientSecret;
 
     @Value("${app.frontend.url:http://localhost:5173}")
@@ -61,85 +61,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        boolean googleEnabled = googleClientId != null && !googleClientId.isBlank() 
-                               && googleClientSecret != null && !googleClientSecret.isBlank();
+        log.info("Configuring SecurityFilterChain - AUTHENTICATION COMPLETELY DISABLED");
+        
+        // Disable all security and allow all requests
         http.csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            );
-        // Lightweight request logger for debugging auth/CORS
-        http.addFilterBefore(new OncePerRequestFilter() {
-            @Override
-            protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request,
-                                           jakarta.servlet.http.HttpServletResponse response,
-                                           jakarta.servlet.FilterChain filterChain)
-                    throws java.io.IOException, jakarta.servlet.ServletException {
-                try {
-                    String path = request.getRequestURI();
-                    if (path.startsWith("/api") || path.startsWith("/login") || path.startsWith("/oauth2")) {
-                        String origin = request.getHeader("Origin");
-                        String referer = request.getHeader("Referer");
-                        String cookie = request.getHeader("Cookie");
-                        String userAgent = request.getHeader("User-Agent");
-                        log.info("REQ {} {} origin={} referer={} hasCookie={} userAgent={}", 
-                                request.getMethod(), path, origin, referer, cookie!=null, 
-                                userAgent != null ? userAgent.substring(0, Math.min(50, userAgent.length())) + "..." : "null");
-                    }
-                } catch (Exception ignore) {}
-                filterChain.doFilter(request, response);
-            }
-        }, UsernamePasswordAuthenticationFilter.class);
-        if (!googleEnabled) {
-            // No Google OAuth configured - allow all for development
-            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-            log.warn("Google OAuth not configured - running in open mode");
-        } else {
-            // Google OAuth configured - enable authentication
-            http
-                .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                        "/", "/index.html", "/assets/**", "/static/**",
-                        "/login**", "/oauth2/**", "/login/oauth2/**", "/error"
-                    ).permitAll()
-                    .requestMatchers("/api/public/**", "/api/ai/**").permitAll()
-                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                    .anyRequest().authenticated()
-                )
-                .exceptionHandling(ex -> ex
-                    .defaultAuthenticationEntryPointFor((request, response, authException) -> {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.setContentType("application/json");
-                        try (java.io.PrintWriter w = response.getWriter()) {
-                            w.write("{\"error\":\"unauthenticated\"}");
-                        }
-                    }, new AntPathRequestMatcher("/api/**"))
-                )
-                .oauth2Login(oauth -> oauth
-                    .authorizationEndpoint(authorization -> 
-                        authorization.authorizationRequestRepository(authorizationRequestRepository())
-                    )
-                    .loginPage("/oauth2/authorization/google")
-                    .successHandler((req, res, auth) -> {
-                        log.info("OAuth2 login successful for user: {}", auth.getName());
-                        var session = req.getSession(true);
-                        log.info("Session created: ID={} isNew={}", session.getId(), session.isNew());
-                        res.sendRedirect(frontendUrl + "/#/dashboard?login=success");
-                    })
-                    .failureHandler((req, res, ex) -> {
-                        log.error("OAuth2 login failed: {}", ex.getMessage());
-                        String reason = java.net.URLEncoder.encode(ex.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
-                        res.sendRedirect(frontendUrl + "/#/?login=error&reason=" + reason);
-                    })
-                )
-                .logout(logout -> logout
-                    .logoutUrl("/logout")
-                    .logoutSuccessHandler((req, res, auth) -> {
-                        res.sendRedirect(frontendUrl + "/#/?logout=success");
-                    })
-                    .permitAll()
-                );
-        }
+            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            
         return http.build();
     }
 
@@ -157,5 +85,3 @@ public class SecurityConfig {
         return source;
     }
 }
-
-

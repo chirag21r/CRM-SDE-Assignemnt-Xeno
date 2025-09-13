@@ -93,24 +93,20 @@ function Login(){
               <div style={{ marginTop:6, color:t.subtext, fontSize:14 }}>Minimal CRM for segments, campaigns, and insights.</div>
             </div>
             <div style={{ display:'grid', gap:10, margin:'14px 0 18px' }}>
-              <div style={{ color:t.subtext, fontSize:13 }}>- Sign in securely with Google</div>
+              <div style={{ color:t.subtext, fontSize:13 }}>- No authentication required</div>
               <div style={{ color:t.subtext, fontSize:13 }}>- Create segments with flexible rules</div>
               <div style={{ color:t.subtext, fontSize:13 }}>- Launch campaigns and track delivery</div>
             </div>
             <div style={{ marginTop:10 }}>
               <button onClick={()=>{
-                if (authEnabled) {
-                  console.log('Starting OAuth flow...')
-                  window.location.href = withBase('/oauth2/authorization/google')
-                } else {
-                  console.log('Auth not enabled - redirecting to dashboard')
-                  window.location.hash = '#/dashboard'
-                  if (window.showToast) window.showToast('Signed in (dev mode)', 'success')
-                }
+                // AUTHENTICATION DISABLED - ALWAYS REDIRECT TO DASHBOARD
+                console.log('Sign in clicked - redirecting to dashboard (no auth required)')
+                window.location.hash = '#/dashboard'
+                if (window.showToast) window.showToast('Signed in successfully', 'success')
               }} style={{
                 width:'100%', height:46, borderRadius:10,
                 background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer'
-              }}>Sign in with Google</button>
+              }}>Sign in</button>
               {!authEnabled && (
                 <div style={{ marginTop:10, display:'flex', gap:10 }}>
                   <div style={{ color:t.subtext, fontSize:12, flex:1 }}>Google login not configured (dev mode).
@@ -653,48 +649,12 @@ function App(){
   const [isAuthed,setIsAuthed]=useState(null) // null = checking, false = not authed, true = authed
   
   useEffect(() => {
-    // Check auth on page load
-    api('/api/me')
-      .then(userData => {
-        console.log('User authenticated:', userData)
-        setIsAuthed(true)
-      })
-      .catch(() => {
-        console.log('User not authenticated')
-        setIsAuthed(false)
-      })
+    // AUTHENTICATION DISABLED - ALWAYS SET TO AUTHENTICATED
+    console.log('Authentication disabled - always setting to authenticated')
+    setIsAuthed(true)
   }, [])
   
-  // Handle OAuth success/error redirect
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1] || '')
-    
-    if (params.get('login') === 'success') {
-      console.log('OAuth success detected, checking auth...')
-      api('/api/me')
-        .then(userData => {
-          console.log('OAuth login successful:', userData)
-          setIsAuthed(true)
-          if (window.showToast) window.showToast('Signed in successfully', 'success')
-          // Clean URL
-          window.location.hash = '#/dashboard'
-        })
-        .catch(() => {
-          console.log('OAuth login verification failed')
-          setIsAuthed(false)
-        })
-    } else if (params.get('login') === 'error') {
-      console.log('OAuth login failed:', params.get('reason'))
-      setIsAuthed(false)
-      if (window.showToast) window.showToast('Sign in failed: ' + (params.get('reason') || 'Unknown error'), 'error')
-      window.location.hash = '#/'
-    } else if (params.get('logout') === 'success') {
-      console.log('Logout successful')
-      setIsAuthed(false)
-      if (window.showToast) window.showToast('Signed out successfully', 'error')
-      window.location.hash = '#/'
-    }
-  }, [route])
+  // AUTHENTICATION DISABLED - NO OAUTH HANDLING NEEDED
   useEffect(()=>{
     // ensure no white borders/background
     document.documentElement.style.background = t.bg

@@ -355,44 +355,46 @@ function Dashboard(){
   const [stats, setStats] = useState({ totalCustomers:0, totalOrders:0, totalCampaigns:0, lastCampaign:{}, totalIncome:0 })
   const [derivedIncome,setDerivedIncome]=useState(0)
   const [campCards,setCampCards] = useState([])
+  const [loading, setLoading] = useState(true)
+  
   useEffect(()=>{
-    console.log('Dashboard useEffect - making API calls')
-    api('/api/dashboard/stats')
-      .then(data => {
-        console.log('Dashboard stats received:', data)
-        setStats(data)
-      })
-      .catch(err => {
-        console.log('Dashboard stats failed:', err)
-      })
+    console.log('Dashboard useEffect - making parallel API calls')
+    setLoading(true)
     
-    // Fallback income computed on frontend (sum of customer totalSpend)
-    api('/api/customers')
-      .then(cs=>{
-        console.log('Customers received:', cs)
-        const sum = (cs||[]).reduce((acc,c)=> acc + Number(c.totalSpend||0), 0)
-        setDerivedIncome(sum)
-      })
-      .catch(err => {
-        console.log('Customers failed:', err)
-      })
-    
-    ;(async()=>{
-      try {
-        const list = await api('/api/campaigns')
-        console.log('Campaigns received:', list)
-        const top = list.slice(-8) // look at a few more recent items
-        const cards = await Promise.all(top.map(async c=>{
+    // Parallel API calls for better performance
+    Promise.all([
+      api('/api/dashboard/stats'),
+      api('/api/customers'),
+      api('/api/campaigns')
+    ]).then(([statsData, customers, campaigns]) => {
+      console.log('Dashboard data received:', { statsData, customers: customers.length, campaigns: campaigns.length })
+      
+      setStats(statsData)
+      
+      // Fallback income computed on frontend
+      const sum = (customers||[]).reduce((acc,c)=> acc + Number(c.totalSpend||0), 0)
+      setDerivedIncome(sum)
+      
+      // Process campaigns with stats in parallel
+      const top = campaigns.slice(-8)
+      return Promise.all(top.map(async c=>{
+        try {
           const s = await api(`/api/campaigns/${c.id}/stats`)
           const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
           return { id:c.id, name:c.name, pct, sent:s.sent, failed:s.failed, total:s.total }
-        }))
-        const delivered = cards.filter(c => (c.sent + c.failed) > 0)
-        setCampCards(delivered.reverse())
-      } catch (err) {
-        console.log('Campaigns failed:', err)
-      }
-    })()
+        } catch (err) {
+          console.log(`Failed to get stats for campaign ${c.id}:`, err)
+          return { id:c.id, name:c.name, pct: 0, sent: 0, failed: 0, total: 0 }
+        }
+      }))
+    }).then(cards => {
+      const delivered = cards.filter(c => (c.sent + c.failed) > 0)
+      setCampCards(delivered.reverse())
+      setLoading(false)
+    }).catch(err => {
+      console.log('Dashboard data failed:', err)
+      setLoading(false)
+    })
   },[])
   const last = stats.lastCampaign || {}
   const sentPct = last.total ? Math.round((last.sent/last.total)*100) : 0
@@ -402,6 +404,16 @@ function Dashboard(){
   ]
   const barCards = campCards.slice(0,6)
   const campaignData = barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
+  if (loading) {
+    return (
+      <Page>
+        <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>
+          <div style={{ color:t.subtext }}>Loading dashboard...</div>
+        </div>
+      </Page>
+    )
+  }
+
   return (
     <Page>
       <div style={{ display:'grid', gap:16, gridTemplateColumns:'repeat(4, 1fr)', marginBottom:8 }}>
@@ -564,43 +576,65 @@ function OrdersPage(){
 
 function CampaignHistoryPage(){
   const [rows,setRows]=useState([])
-  useEffect(()=>{ (async()=>{
-    const list = await api('/api/campaigns')
-    const withStats = await Promise.all(list.map(async c=>{
-      const s = await api(`/api/campaigns/${c.id}/stats`)
-      const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
-      return { id:c.id, name:c.name, total:s.total, sent:s.sent, failed:s.failed, pct }
-    }))
-    // Show only campaigns that have at least one delivered (sent or failed)
-    setRows(withStats.filter(r => (r.sent + r.failed) > 0).reverse())
-  })() },[])
+  const [loading, setLoading] = useState(true)
+  
+  useEffect(()=>{ 
+    (async()=>{
+      setLoading(true)
+      try {
+        const list = await api('/api/campaigns')
+        const withStats = await Promise.all(list.map(async c=>{
+          try {
+            const s = await api(`/api/campaigns/${c.id}/stats`)
+            const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
+            return { id:c.id, name:c.name, total:s.total, sent:s.sent, failed:s.failed, pct }
+          } catch (err) {
+            console.log(`Failed to get stats for campaign ${c.id}:`, err)
+            return { id:c.id, name:c.name, total: 0, sent: 0, failed: 0, pct: 0 }
+          }
+        }))
+        // Show only campaigns that have at least one delivered (sent or failed)
+        setRows(withStats.filter(r => (r.sent + r.failed) > 0).reverse())
+      } catch (err) {
+        console.log('Campaign history failed:', err)
+      } finally {
+        setLoading(false)
+      }
+    })() 
+  },[])
   return (
     <Page>
       <Card title="Campaign History">
-        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:t.stripe1 }}>
-            <tr>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Sent</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Failed</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Total</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Success %</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r,i)=> (
-              <tr key={r.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
-                <td style={{ padding:'10px 8px' }}>{r.id}</td>
-                <td style={{ padding:'10px 8px' }}>{r.name}</td>
-                <td style={{ padding:'10px 8px', color:t.green }}>{r.sent}</td>
-                <td style={{ padding:'10px 8px', color:t.red }}>{r.failed}</td>
-                <td style={{ padding:'10px 8px' }}>{r.total}</td>
-                <td style={{ padding:'10px 8px' }}>{r.pct}%</td>
+        {loading ? (
+          <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'200px' }}>
+            <div style={{ color:t.subtext }}>Loading campaign history...</div>
+          </div>
+        ) : (
+          <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+            <thead style={{ background:t.stripe1 }}>
+              <tr>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Name</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Sent</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Failed</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Total</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Success %</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r,i)=> (
+                <tr key={r.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
+                  <td style={{ padding:'10px 8px' }}>{r.id}</td>
+                  <td style={{ padding:'10px 8px' }}>{r.name}</td>
+                  <td style={{ padding:'10px 8px', color:t.green }}>{r.sent}</td>
+                  <td style={{ padding:'10px 8px', color:t.red }}>{r.failed}</td>
+                  <td style={{ padding:'10px 8px' }}>{r.total}</td>
+                  <td style={{ padding:'10px 8px' }}>{r.pct}%</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </Card>
     </Page>
   )

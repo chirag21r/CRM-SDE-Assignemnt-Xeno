@@ -347,22 +347,42 @@ function Dashboard(){
   const [derivedIncome,setDerivedIncome]=useState(0)
   const [campCards,setCampCards] = useState([])
   useEffect(()=>{
-    api('/api/dashboard/stats').then(setStats).catch(()=>{})
+    console.log('Dashboard useEffect - making API calls')
+    api('/api/dashboard/stats')
+      .then(data => {
+        console.log('Dashboard stats received:', data)
+        setStats(data)
+      })
+      .catch(err => {
+        console.log('Dashboard stats failed:', err)
+      })
+    
     // Fallback income computed on frontend (sum of customer totalSpend)
-    api('/api/customers').then(cs=>{
-      const sum = (cs||[]).reduce((acc,c)=> acc + Number(c.totalSpend||0), 0)
-      setDerivedIncome(sum)
-    }).catch(()=>{})
+    api('/api/customers')
+      .then(cs=>{
+        console.log('Customers received:', cs)
+        const sum = (cs||[]).reduce((acc,c)=> acc + Number(c.totalSpend||0), 0)
+        setDerivedIncome(sum)
+      })
+      .catch(err => {
+        console.log('Customers failed:', err)
+      })
+    
     ;(async()=>{
-      const list = await api('/api/campaigns')
-      const top = list.slice(-8) // look at a few more recent items
-      const cards = await Promise.all(top.map(async c=>{
-        const s = await api(`/api/campaigns/${c.id}/stats`)
-        const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
-        return { id:c.id, name:c.name, pct, sent:s.sent, failed:s.failed, total:s.total }
-      }))
-      const delivered = cards.filter(c => (c.sent + c.failed) > 0)
-      setCampCards(delivered.reverse())
+      try {
+        const list = await api('/api/campaigns')
+        console.log('Campaigns received:', list)
+        const top = list.slice(-8) // look at a few more recent items
+        const cards = await Promise.all(top.map(async c=>{
+          const s = await api(`/api/campaigns/${c.id}/stats`)
+          const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
+          return { id:c.id, name:c.name, pct, sent:s.sent, failed:s.failed, total:s.total }
+        }))
+        const delivered = cards.filter(c => (c.sent + c.failed) > 0)
+        setCampCards(delivered.reverse())
+      } catch (err) {
+        console.log('Campaigns failed:', err)
+      }
     })()
   },[])
   const last = stats.lastCampaign || {}
@@ -627,32 +647,23 @@ function App(){
   }, [])
   const [isAuthed,setIsAuthed]=useState(false)
   const [authChecked,setAuthChecked]=useState(false)
-  const [forceLoggedOut,setForceLoggedOut]=useState(false)
-  const refreshAuth = ()=>{
-    console.log('refreshAuth called')
-    setAuthChecked(false)
-    return api('/api/me')
-      .then((data)=>{ 
-        console.log('refreshAuth success:', data, 'forceLoggedOut:', forceLoggedOut)
-        if(!forceLoggedOut) setIsAuthed(true) 
-      })
-      .catch((err)=>{ 
-        console.log('refreshAuth failed:', err)
-        setIsAuthed(false) 
-      })
-      .finally(()=> {
-        console.log('refreshAuth finally - setting authChecked=true')
-        setAuthChecked(true)
-      })
-  }
-  useEffect(()=>{ refreshAuth() }, [route])
-  useEffect(()=>{
-    console.log('Auth state check:', { authChecked, isAuthed, forceLoggedOut, route })
-    if (authChecked && (!isAuthed || forceLoggedOut) && isProtected(route)) {
-      console.log('Redirecting to login due to auth check')
-      window.location.hash = '#/'
+  
+  const checkAuth = async () => {
+    try {
+      const userData = await api('/api/me')
+      console.log('Auth check success:', userData)
+      setIsAuthed(true)
+    } catch (err) {
+      console.log('Auth check failed:', err)
+      setIsAuthed(false)
+    } finally {
+      setAuthChecked(true)
     }
-  }, [authChecked, isAuthed, forceLoggedOut, route])
+  }
+  
+  useEffect(() => {
+    checkAuth()
+  }, [])
   useEffect(()=>{
     // ensure no white borders/background
     document.documentElement.style.background = t.bg
@@ -662,10 +673,9 @@ function App(){
   const doLogout = async ()=>{
     try { await fetch(withBase('/logout'), { method:'POST', credentials:'include' }) } catch(e) {}
     setIsAuthed(false)
-    setForceLoggedOut(true)
+    setAuthChecked(false)
     window.location.hash = '#/'
-    setTimeout(()=>{ if (window.showToast) window.showToast('Logged out', 'error') }, 150)
-    setTimeout(()=> setForceLoggedOut(false), 2000)
+    if (window.showToast) window.showToast('Logged out', 'error')
   }
   const isProtected = (r)=> ['#/dashboard','#/customers','#/orders','#/segment','#/create-campaign','#/campaigns','#/ai'].some(p=> (r||'').startsWith(p))
   const dark = { background:t.bg, color:t.text }
@@ -703,7 +713,13 @@ function App(){
           <div>{msg}</div>
         </div>
         )})()}
-      { (route==='#/' || route==='#' || (isProtected(route) && (!authChecked || !isAuthed))) ? (
+      { (route==='#/' || route==='#') ? (
+          <Login />
+        ) : !authChecked ? (
+          <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>
+            <div style={{ color:t.subtext }}>Loading...</div>
+          </div>
+        ) : !isAuthed ? (
           <Login />
         ) : (
           <div style={{ display:'flex' }}>

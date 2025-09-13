@@ -22,7 +22,7 @@ const t = {
   panel: '#161b22',
   border: '#1f242d',
   text: '#e6edf3',
-  subtext: '#8b949e',
+  subtext: '#9aa4ae',
   stripe1: '#0f141a',
   stripe2: '#121820',
   hover: '#1b2230',
@@ -40,8 +40,8 @@ function Page({ children }){
 
 function Card({ title, children }){
   return (
-    <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:20, margin:'20px 0', boxShadow:'0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.35)' }}>
-      <h2 style={{ margin:'0 0 14px', fontSize:18, color:t.text, letterSpacing:0.2 }}>{title}</h2>
+    <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:22, margin:'20px 0', boxShadow:'0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.35)' }}>
+      <h2 style={{ margin:'0 0 12px', fontSize:16, fontWeight:700, color:t.text, letterSpacing:0.3 }}>{title}</h2>
       {children}
     </div>
   )
@@ -53,7 +53,7 @@ function Button({ children, secondary, ...props }){
       background: secondary ? 'transparent' : t.text,
       color: secondary ? t.text : '#000',
       border: secondary ? `1px solid ${t.text}` : 0,
-      borderRadius:8, padding:'10px 14px', fontWeight:600, cursor:'pointer', height:40
+      borderRadius:8, padding:'10px 14px', fontWeight:600, cursor:'pointer', height:38, fontSize:13
     }}>{children}</button>
   )
 }
@@ -61,8 +61,8 @@ function Button({ children, secondary, ...props }){
 function Input({ label, ...props }){
   return (
     <div style={{ display:'flex', flexDirection:'column' }}>
-      <small style={{ color:t.subtext, marginBottom:6 }}>{label}</small>
-      <input {...props} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.15)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:42, fontSize:14 }} />
+      <small style={{ color:t.subtext, marginBottom:6, fontSize:12 }}>{label}</small>
+      <input {...props} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.18)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:40, fontSize:13 }} />
     </div>
   )
 }
@@ -95,15 +95,15 @@ function Login(){
             boxShadow:'0 10px 30px rgba(0,0,0,0.45)'
           }}>
             <div style={{ marginBottom:18 }}>
-              <h1 style={{ margin:0, fontSize:28, fontWeight:800, letterSpacing:0.2, color:t.text }}>Mini CRM</h1>
-              <div style={{ marginTop:6, color:t.subtext, fontSize:14 }}>Minimal CRM for segments, campaigns, and insights.</div>
+              <h1 style={{ margin:0, fontSize:26, fontWeight:800, letterSpacing:0.2, color:t.text }}>Mini CRM</h1>
+              <div style={{ marginTop:6, color:t.subtext, fontSize:13 }}>Minimal CRM for segments, campaigns, and insights.</div>
             </div>
             <div style={{ display:'grid', gap:10, margin:'14px 0 18px' }}>
               <div style={{ color:t.subtext, fontSize:13 }}>- Sign in with Google to continue</div>
               <div style={{ color:t.subtext, fontSize:13 }}>- Create segments with flexible rules</div>
               <div style={{ color:t.subtext, fontSize:13 }}>- Launch campaigns and track delivery</div>
             </div>
-            <div style={{ marginTop:10 }}>
+            <div style={{ marginTop:8 }}>
               <button onClick={()=>{
                 console.log('[Auth] Sign-in clicked. authEnabled=', authEnabled)
                 if (authEnabled) {
@@ -116,8 +116,8 @@ function Login(){
                   if (window.showToast) window.showToast('Signed in (dev mode)', 'success')
                 }
               }} style={{
-                width:'100%', height:46, borderRadius:10,
-                background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer'
+                width:'100%', height:42, borderRadius:10,
+                background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer', fontSize:14
               }}>Sign in</button>
               {!authEnabled && (
                 <div style={{ marginTop:10, display:'flex', gap:10 }}>
@@ -408,22 +408,22 @@ function Dashboard(){
   const campaignData = barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
   return (
     <Page>
-      <div style={{ display:'grid', gap:20, gridTemplateColumns:'repeat(4, 1fr)', marginBottom:10 }}>
+      <div style={{ display:'grid', gap:16, gridTemplateColumns:'repeat(4, 1fr)', marginBottom:8 }}>
         <StatCard label="Total Customers" value={stats.totalCustomers} />
         <StatCard label="Total Orders" value={stats.totalOrders} />
         <StatCard label="Income" value={formatINR((derivedIncome||0) > 0 ? derivedIncome : (stats.totalIncome||0))} />
       </div>
       <Card title="Recent Campaigns">
-        <div style={{ margin:'4px 0 14px', height:220 }}>
+        <div style={{ margin:'2px 0 10px', height:200 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={campaignData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2d333b" />
-              <XAxis dataKey="name" stroke={t.text} tick={{ fontSize: 11 }} />
-              <YAxis stroke={t.text} tick={{ fontSize: 11 }} />
+              <XAxis dataKey="name" stroke={t.text} tick={{ fontSize: 10 }} />
+              <YAxis stroke={t.text} tick={{ fontSize: 10 }} />
               <RTooltip />
               <RLegend />
-              <Bar dataKey="success" fill={t.green} radius={[6,6,0,0]} barSize={28} />
-              <Bar dataKey="failed" fill={t.red} radius={[6,6,0,0]} barSize={28} />
+              <Bar dataKey="success" fill={t.green} radius={[6,6,0,0]} barSize={22} />
+              <Bar dataKey="failed" fill={t.red} radius={[6,6,0,0]} barSize={22} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -20,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.oauth2.client.web.HttpSessionOAuth2AuthorizationRequestRepository;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.boot.web.servlet.server.CookieSameSiteSupplier;
 
 import java.util.List;
 
@@ -42,6 +43,11 @@ public class SecurityConfig {
     @Bean
     public AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository() {
         return new HttpSessionOAuth2AuthorizationRequestRepository();
+    }
+
+    @Bean
+    public CookieSameSiteSupplier cookieSameSiteSupplier() {
+        return CookieSameSiteSupplier.ofNone();
     }
 
     @Bean
@@ -103,7 +109,8 @@ public class SecurityConfig {
                     .successHandler((req, res, auth) -> {
                         log.info("OAuth2 login successful for user: {}", auth.getName());
                         // Force session creation
-                        req.getSession(true);
+                        var session = req.getSession(true);
+                        log.info("Session created: ID={} isNew={}", session.getId(), session.isNew());
                         res.sendRedirect(frontendUrl + "/#/?login=1");
                     })
                     .failureHandler((req, res, ex) -> {

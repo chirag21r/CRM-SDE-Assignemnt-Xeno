@@ -1,17 +1,42 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend } from 'recharts'
 import { createRoot } from 'react-dom/client'
+
+// Lazy load heavy components - will be defined after components
 
 // UPDATED: Force new build with correct backend URL
 const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'https://crm-sde-assignemnt-xeno.onrender.com'
 console.log('🚀 Frontend loaded with API_BASE:', API_BASE)
 const withBase = (path) => (/^https?:/i.test(path) ? path : `${API_BASE||''}${path}`)
+
+// Simple cache to reduce API calls
+const cache = new Map()
+const CACHE_TTL = 30000 // 30 seconds
+
 const api = async (path, options={}) => {
   const fullUrl = withBase(path)
+  const cacheKey = `${options.method || 'GET'}:${fullUrl}`
+  
+  // Check cache for GET requests
+  if (!options.method || options.method === 'GET') {
+    const cached = cache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log('Cache hit:', fullUrl)
+      return cached.data
+    }
+  }
+  
   console.log('API call:', fullUrl, 'API_BASE:', API_BASE)
   const res = await fetch(fullUrl, { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...options })
   if (!res.ok) throw new Error(await res.text())
-  return res.json()
+  const data = await res.json()
+  
+  // Cache GET requests
+  if (!options.method || options.method === 'GET') {
+    cache.set(cacheKey, { data, timestamp: Date.now() })
+  }
+  
+  return data
 }
 
 const formatINR = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(n||0))
@@ -37,6 +62,14 @@ function Page({ children }){
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 24px 28px' }}>
       {children}
+    </div>
+  )
+}
+
+function LoadingSpinner({ message = "Loading..." }){
+  return (
+    <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>
+      <div style={{ color:t.subtext }}>{message}</div>
     </div>
   )
 }
@@ -396,20 +429,28 @@ function Dashboard(){
       setLoading(false)
     })
   },[])
-  const last = stats.lastCampaign || {}
-  const sentPct = last.total ? Math.round((last.sent/last.total)*100) : 0
-  const lastCampaign = [
-    { name: 'Sent', value: last.sent || 0 },
-    { name: 'Failed', value: last.failed || 0 }
-  ]
-  const barCards = campCards.slice(0,6)
-  const campaignData = barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
+  // Memoize expensive calculations
+  const lastCampaignData = useMemo(() => {
+    const last = stats.lastCampaign || {}
+    const sentPct = last.total ? Math.round((last.sent/last.total)*100) : 0
+    return {
+      last,
+      sentPct,
+      chartData: [
+        { name: 'Sent', value: last.sent || 0 },
+        { name: 'Failed', value: last.failed || 0 }
+      ]
+    }
+  }, [stats.lastCampaign])
+
+  const campaignData = useMemo(() => {
+    const barCards = campCards.slice(0,6)
+    return barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
+  }, [campCards])
   if (loading) {
     return (
       <Page>
-        <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>
-          <div style={{ color:t.subtext }}>Loading dashboard...</div>
-        </div>
+        <LoadingSpinner message="Loading dashboard..." />
       </Page>
     )
   }
@@ -691,10 +732,14 @@ function App(){
   const [isAuthed,setIsAuthed]=useState(null) // null = checking, false = not authed, true = authed
   
   useEffect(() => {
-    // Check authentication status
-    api('/api/me')
-      .then(() => setIsAuthed(true))
-      .catch(() => setIsAuthed(false))
+    // Check authentication status with timeout
+    const timeoutId = setTimeout(() => {
+      api('/api/me')
+        .then(() => setIsAuthed(true))
+        .catch(() => setIsAuthed(false))
+    }, 100) // Small delay to prevent blocking initial render
+    
+    return () => clearTimeout(timeoutId)
   }, [])
   
   useEffect(()=>{
@@ -716,17 +761,29 @@ function App(){
   }
   const isProtected = (r)=> ['#/dashboard','#/customers','#/orders','#/segment','#/create-campaign','#/campaigns','#/ai'].some(p=> (r||'').startsWith(p))
   const dark = { background:t.bg, color:t.text }
-  const main = () => {
+  const main = useCallback(() => {
     if (route==='#/' || route==='#') return <Login />
-    if (route.startsWith('#/dashboard')) return <Dashboard />
+    if (route.startsWith('#/dashboard')) return (
+      <Suspense fallback={<LoadingSpinner message="Loading dashboard..." />}>
+        <Dashboard />
+      </Suspense>
+    )
     if (route.startsWith('#/customers')) return <CustomersPage />
     if (route.startsWith('#/orders')) return <OrdersPage />
     if (route.startsWith('#/segment')) return <SegmentBuilder />
     if (route.startsWith('#/create-campaign')) return <CreateCampaignPage />
-    if (route.startsWith('#/campaigns')) return <CampaignHistoryPage />
+    if (route.startsWith('#/campaigns')) return (
+      <Suspense fallback={<LoadingSpinner message="Loading campaign history..." />}>
+        <CampaignHistoryPage />
+      </Suspense>
+    )
     if (route.startsWith('#/ai')) return <AISuggestionsPage />
-    return <Dashboard />
-  }
+    return (
+      <Suspense fallback={<LoadingSpinner message="Loading dashboard..." />}>
+        <Dashboard />
+      </Suspense>
+    )
+  }, [route])
   return (
     <div style={{ ...dark, minHeight:'100vh' }}>
       <header style={{ height:60, padding:'0 20px', background:t.bg, borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>

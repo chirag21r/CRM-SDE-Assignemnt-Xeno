@@ -30,6 +30,9 @@ const t = {
   red: '#dc2626'
 }
 
+// Consistent typography scale
+const f = { base: 14, small: 13, h1: 30, h2: 17, nav: 14, sidebar: 14, table: 13.5 }
+
 function Page({ children }){
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 24px 24px 28px' }}>
@@ -41,7 +44,7 @@ function Page({ children }){
 function Card({ title, children }){
   return (
     <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:22, margin:'20px 0', boxShadow:'0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.35)' }}>
-      <h2 style={{ margin:'0 0 12px', fontSize:16, fontWeight:700, color:t.text, letterSpacing:0.3 }}>{title}</h2>
+      <h2 style={{ margin:'0 0 12px', fontSize:f.h2, fontWeight:700, color:t.text, letterSpacing:0.3 }}>{title}</h2>
       {children}
     </div>
   )
@@ -53,7 +56,7 @@ function Button({ children, secondary, ...props }){
       background: secondary ? 'transparent' : t.text,
       color: secondary ? t.text : '#000',
       border: secondary ? `1px solid ${t.text}` : 0,
-      borderRadius:8, padding:'10px 14px', fontWeight:600, cursor:'pointer', height:38, fontSize:13
+      borderRadius:8, padding:'10px 14px', fontWeight:600, cursor:'pointer', height:38, fontSize:f.nav
     }}>{children}</button>
   )
 }
@@ -61,8 +64,8 @@ function Button({ children, secondary, ...props }){
 function Input({ label, ...props }){
   return (
     <div style={{ display:'flex', flexDirection:'column' }}>
-      <small style={{ color:t.subtext, marginBottom:6, fontSize:12 }}>{label}</small>
-      <input {...props} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.18)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:40, fontSize:13 }} />
+      <small style={{ color:t.subtext, marginBottom:6, fontSize:f.small }}>{label}</small>
+      <input {...props} style={{ background:t.panel, color:t.text, border:`1px solid rgba(255,255,255,0.18)`, outline:'1px solid rgba(255,255,255,0.06)', borderRadius:8, padding:'10px 12px', height:40, fontSize:f.base }} />
     </div>
   )
 }
@@ -95,13 +98,13 @@ function Login(){
             boxShadow:'0 10px 30px rgba(0,0,0,0.45)'
           }}>
             <div style={{ marginBottom:18 }}>
-              <h1 style={{ margin:0, fontSize:26, fontWeight:800, letterSpacing:0.2, color:t.text }}>Mini CRM</h1>
-              <div style={{ marginTop:6, color:t.subtext, fontSize:13 }}>Minimal CRM for segments, campaigns, and insights.</div>
+              <h1 style={{ margin:0, fontSize:f.h1, fontWeight:800, letterSpacing:0.2, color:t.text }}>Mini CRM</h1>
+              <div style={{ marginTop:6, color:t.subtext, fontSize:f.base }}>Minimal CRM for segments, campaigns, and insights.</div>
             </div>
             <div style={{ display:'grid', gap:10, margin:'14px 0 18px' }}>
-              <div style={{ color:t.subtext, fontSize:13 }}>- Sign in with Google to continue</div>
-              <div style={{ color:t.subtext, fontSize:13 }}>- Create segments with flexible rules</div>
-              <div style={{ color:t.subtext, fontSize:13 }}>- Launch campaigns and track delivery</div>
+              <div style={{ color:t.subtext, fontSize:f.table }}>- Sign in with Google to continue</div>
+              <div style={{ color:t.subtext, fontSize:f.table }}>- Create segments with flexible rules</div>
+              <div style={{ color:t.subtext, fontSize:f.table }}>- Launch campaigns and track delivery</div>
             </div>
             <div style={{ marginTop:8 }}>
               <button onClick={()=>{
@@ -117,7 +120,7 @@ function Login(){
                 }
               }} style={{
                 width:'100%', height:42, borderRadius:10,
-                background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer', fontSize:14
+                background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer', fontSize:15
               }}>Sign in</button>
               {!authEnabled && (
                 <div style={{ marginTop:10, display:'flex', gap:10 }}>
@@ -440,7 +443,7 @@ function DashboardCampaignTable({ rows }){
       <thead style={{ background:t.stripe1 }}>
         <tr>
           {['ID','Name','Sent','Failed','Total','Success %'].map(h => (
-            <th key={h} style={{ textAlign:'left', padding:'12px 8px', borderBottom:`1px solid ${t.border}`, fontWeight:700 }}>{h}</th>
+            <th key={h} style={{ textAlign:'left', padding:'12px 8px', borderBottom:`1px solid ${t.border}`, fontWeight:700, fontSize:f.table }}>{h}</th>
           ))}
         </tr>
       </thead>
@@ -634,7 +637,7 @@ function AISuggestionsPage(){
 }
 
 function Sidebar(){
-  const Item = ({href, label}) => <a href={href} style={{ color:t.text, textDecoration:'none', padding:'12px 14px', display:'block', borderLeft:'3px solid transparent' }}>{label}</a>
+  const Item = ({href, label}) => <a href={href} style={{ color:t.text, textDecoration:'none', padding:'12px 14px', display:'block', borderLeft:'3px solid transparent', fontSize:f.sidebar, fontWeight:500, letterSpacing:0.2 }}>{label}</a>
   return (
     <div style={{ width:220, background:t.bg, minHeight:'calc(100vh - 60px)', borderRight:`1px solid ${t.border}` }}>
       <Item href="#/dashboard" label="Dashboard" />
@@ -700,12 +703,12 @@ function App(){
   return (
     <div style={{ ...dark, minHeight:'100vh' }}>
       <header style={{ height:60, padding:'0 20px', background:t.bg, borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</div>
+        <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text, fontSize:17 }}>Xeno Mini CRM</div>
         <nav style={{ display:'flex', gap:12, alignItems:'center' }}>
-          <a href="#/" style={{ color:t.subtext, textDecoration:'none' }}>Login</a>
-          <a href="#/dashboard" onClick={(e)=>{ const onLogin = (route === '#/' || route === '#'); if(onLogin || isAuthed !== true ){ e.preventDefault(); window.location.hash='#/'; if(window.showToast) window.showToast('Please sign in', 'error') } }} style={{ color:t.subtext, textDecoration:'none' }}>Dashboard</a>
+          <a href="#/" style={{ color:t.subtext, textDecoration:'none', fontSize:f.nav, fontWeight:500 }}>Login</a>
+          <a href="#/dashboard" onClick={(e)=>{ const onLogin = (route === '#/' || route === '#'); if(onLogin || isAuthed !== true ){ e.preventDefault(); window.location.hash='#/'; if(window.showToast) window.showToast('Please sign in', 'error') } }} style={{ color:t.subtext, textDecoration:'none', fontSize:f.nav, fontWeight:500 }}>Dashboard</a>
           {isAuthed === true && !(route === '#/' || route === '#') && (
-            <button onClick={doLogout} style={{ marginLeft:12, background:'transparent', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 12px', cursor:'pointer' }}>Logout</button>
+            <button onClick={doLogout} style={{ marginLeft:12, background:'transparent', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 12px', cursor:'pointer', fontSize:13.5 }}>Logout</button>
           )}
         </nav>
       </header>

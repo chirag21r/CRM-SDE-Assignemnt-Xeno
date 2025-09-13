@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend } from 'recharts'
 import { createRoot } from 'react-dom/client'
 
-const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : ''
+const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'https://crm-sde-assignemnt-xeno.onrender.com'
 const withBase = (path) => (/^https?:/i.test(path) ? path : `${API_BASE||''}${path}`)
 const api = async (path, options={}) => {
-  const res = await fetch(withBase(path), { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...options })
+  const fullUrl = withBase(path)
+  console.log('API call:', fullUrl, 'API_BASE:', API_BASE)
+  const res = await fetch(fullUrl, { headers: { 'Content-Type': 'application/json' }, credentials: 'include', ...options })
   if (!res.ok) throw new Error(await res.text())
   return res.json()
 }
@@ -627,15 +629,27 @@ function App(){
   const [authChecked,setAuthChecked]=useState(false)
   const [forceLoggedOut,setForceLoggedOut]=useState(false)
   const refreshAuth = ()=>{
+    console.log('refreshAuth called')
     setAuthChecked(false)
     return api('/api/me')
-      .then(()=>{ if(!forceLoggedOut) setIsAuthed(true) })
-      .catch(()=>{ setIsAuthed(false) })
-      .finally(()=> setAuthChecked(true))
+      .then((data)=>{ 
+        console.log('refreshAuth success:', data, 'forceLoggedOut:', forceLoggedOut)
+        if(!forceLoggedOut) setIsAuthed(true) 
+      })
+      .catch((err)=>{ 
+        console.log('refreshAuth failed:', err)
+        setIsAuthed(false) 
+      })
+      .finally(()=> {
+        console.log('refreshAuth finally - setting authChecked=true')
+        setAuthChecked(true)
+      })
   }
   useEffect(()=>{ refreshAuth() }, [route])
   useEffect(()=>{
+    console.log('Auth state check:', { authChecked, isAuthed, forceLoggedOut, route })
     if (authChecked && (!isAuthed || forceLoggedOut) && isProtected(route)) {
+      console.log('Redirecting to login due to auth check')
       window.location.hash = '#/'
     }
   }, [authChecked, isAuthed, forceLoggedOut, route])

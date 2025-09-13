@@ -231,20 +231,22 @@ public class ApiControllers {
     public Map<String, Object> health(@Value("${GOOGLE_CLIENT_ID:}") String googleId,
                                       @Value("${GOOGLE_CLIENT_SECRET:}") String googleSecret,
                                       @Value("${app.frontend.url:}") String frontendUrl) {
-        // AUTHENTICATION COMPLETELY DISABLED
-        boolean authEnabled = false;
-        log.debug("GET /api/public/health authEnabled={} frontendUrl={} hasClientId={} hasClientSecret={}", 
-                 authEnabled, frontendUrl, 
-                 googleId != null && !googleId.isBlank(), googleSecret != null && !googleSecret.isBlank());
+        boolean hasId = googleId != null && !googleId.isBlank();
+        boolean hasSecret = googleSecret != null && !googleSecret.isBlank();
+        boolean authEnabled = hasId && hasSecret;
+        log.debug("GET /api/public/health authEnabled={} frontendUrl={} hasClientId={} hasClientSecret={}",
+                authEnabled, frontendUrl, hasId, hasSecret);
         return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled, "frontendUrl", frontendUrl);
     }
 
-    // Current user (for frontend auth check) - ALWAYS RETURNS AUTHENTICATED
+    // Current user (for frontend auth check)
     @GetMapping("/me")
     public ResponseEntity<?> me(java.security.Principal principal) {
-        log.debug("GET /api/me - AUTHENTICATION DISABLED - ALWAYS RETURNS AUTHENTICATED USER");
-        // Always return authenticated user (no authentication required)
-        return ResponseEntity.ok(Map.<String, Object>of("name", "authenticated-user"));
+        log.debug("GET /api/me principal={}", principal != null ? principal.getName() : null);
+        if (principal == null) {
+            return ResponseEntity.status(401).body(Map.<String, Object>of("error", "unauthenticated"));
+        }
+        return ResponseEntity.ok(Map.<String, Object>of("name", principal.getName()));
     }
 }
 

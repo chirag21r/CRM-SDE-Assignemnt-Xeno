@@ -70,14 +70,20 @@ function Input({ label, ...props }){
 function Login(){
   const [authEnabled, setAuthEnabled] = useState(false)
   useEffect(() => {
-    api('/api/public/health').then(h => setAuthEnabled(!!h.authEnabled)).catch(()=>{})
-    // If we land here after OAuth with flag, show toast once and redirect
-    const params = new URLSearchParams(window.location.hash.split('?')[1]||'')
-    const loginFlag = params.get('login') === '1'
-    api('/api/me').then(() => {
-      if (loginFlag && window.showToast) window.showToast('Signed in successfully', 'success')
-      window.location.hash = '#/dashboard'
-    }).catch(()=>{})
+    console.log('[Auth] Login mounted: checking /api/public/health')
+    api('/api/public/health')
+      .then(h => { console.log('[Auth] /api/public/health:', h); setAuthEnabled(!!h.authEnabled) })
+      .catch(e => console.log('[Auth] /api/public/health failed:', e))
+    // If we returned from OAuth, verify session and go to dashboard
+    const search = new URLSearchParams(window.location.search || '')
+    const hashParams = new URLSearchParams((window.location.hash.split('?')[1]||''))
+    const loginFlag = search.get('login') === 'success' || hashParams.get('login') === 'success' || hashParams.get('login') === '1'
+    if (loginFlag) {
+      console.log('[Auth] OAuth login flag detected → verifying via /api/me')
+      api('/api/me')
+        .then(u => { console.log('[Auth] /api/me after OAuth:', u); if (window.showToast) window.showToast('Signed in successfully', 'success'); window.location.hash = '#/dashboard' })
+        .catch(e => { console.log('[Auth] verification after OAuth failed:', e) })
+    }
   }, [])
   return (
     <Page>
@@ -93,16 +99,22 @@ function Login(){
               <div style={{ marginTop:6, color:t.subtext, fontSize:14 }}>Minimal CRM for segments, campaigns, and insights.</div>
             </div>
             <div style={{ display:'grid', gap:10, margin:'14px 0 18px' }}>
-              <div style={{ color:t.subtext, fontSize:13 }}>- No authentication required</div>
+              <div style={{ color:t.subtext, fontSize:13 }}>- Sign in with Google to continue</div>
               <div style={{ color:t.subtext, fontSize:13 }}>- Create segments with flexible rules</div>
               <div style={{ color:t.subtext, fontSize:13 }}>- Launch campaigns and track delivery</div>
             </div>
             <div style={{ marginTop:10 }}>
               <button onClick={()=>{
-                // AUTHENTICATION DISABLED - ALWAYS REDIRECT TO DASHBOARD
-                console.log('Sign in clicked - redirecting to dashboard (no auth required)')
-                window.location.hash = '#/dashboard'
-                if (window.showToast) window.showToast('Signed in successfully', 'success')
+                console.log('[Auth] Sign-in clicked. authEnabled=', authEnabled)
+                if (authEnabled) {
+                  const url = withBase('/oauth2/authorization/google')
+                  console.log('[Auth] Redirecting to Google OAuth:', url)
+                  window.location.href = url
+                } else {
+                  console.log('[Auth] Auth disabled by backend health. Proceeding without OAuth.')
+                  window.location.hash = '#/dashboard'
+                  if (window.showToast) window.showToast('Signed in (dev mode)', 'success')
+                }
               }} style={{
                 width:'100%', height:46, borderRadius:10,
                 background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer'

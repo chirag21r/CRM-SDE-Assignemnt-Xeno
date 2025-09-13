@@ -61,13 +61,73 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        log.info("Configuring SecurityFilterChain - AUTHENTICATION COMPLETELY DISABLED");
-        
-        // Disable all security and allow all requests
+        boolean googleEnabled = googleClientId != null && !googleClientId.isBlank()
+                && googleClientSecret != null && !googleClientSecret.isBlank();
+        log.info("Configuring SecurityFilterChain. googleEnabled={} frontendUrl={}", googleEnabled, frontendUrl);
+
         http.csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
-            .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-            
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED));
+
+        // Lightweight request logger
+        http.addFilterBefore(new OncePerRequestFilter() {
+            @Override
+            protected void doFilterInternal(jakarta.servlet.http.HttpServletRequest request,
+                                            jakarta.servlet.http.HttpServletResponse response,
+                                            jakarta.servlet.FilterChain filterChain)
+                    throws java.io.IOException, jakarta.servlet.ServletException {
+                try {
+                    String path = request.getRequestURI();
+                    if (path.startsWith("/api") || path.startsWith("/login") || path.startsWith("/oauth2")) {
+                        String origin = request.getHeader("Origin");
+                        String referer = request.getHeader("Referer");
+                        boolean hasCookie = request.getHeader("Cookie") != null;
+                        log.info("REQ {} {} origin={} referer={} hasCookie={}", request.getMethod(), path, origin, referer, hasCookie);
+                    }
+                } catch (Exception ignore) {}
+                filterChain.doFilter(request, response);
+            }
+        }, UsernamePasswordAuthenticationFilter.class);
+
+        if (!googleEnabled) {
+            log.warn("Google OAuth env vars missing. Allowing all requests (dev mode)");
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        } else {
+            http
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
+                        "/", "/index.html", "/assets/**", "/static/**",
+                        "/favicon.ico", "/login**", "/oauth2/**", "/login/oauth2/**", "/error"
+                    ).permitAll()
+                    .requestMatchers("/api/public/**", "/api/ai/**").permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                    .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                    .defaultAuthenticationEntryPointFor((request, response, authException) -> {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        try (java.io.PrintWriter w = response.getWriter()) {
+                            w.write("{\"error\":\"unauthenticated\"}");
+                        }
+                    }, new AntPathRequestMatcher("/api/**"))
+                )
+                .oauth2Login(oauth -> oauth
+                    .authorizationEndpoint(a -> a.authorizationRequestRepository(authorizationRequestRepository()))
+                    .loginPage("/oauth2/authorization/google")
+                    .successHandler((req, res, auth) -> {
+                        log.info("OAuth2 login successful for {}", auth.getName());
+                        req.getSession(true);
+                        res.sendRedirect(frontendUrl + "/#/dashboard?login=success");
+                    })
+                    .failureHandler((req, res, ex) -> {
+                        log.error("OAuth2 login failed: {}", ex.getMessage());
+                        String reason = java.net.URLEncoder.encode(String.valueOf(ex.getMessage()), java.nio.charset.StandardCharsets.UTF_8);
+                        res.sendRedirect(frontendUrl + "/#/?login=error&reason=" + reason);
+                    })
+                )
+                .logout(logout -> logout.logoutSuccessUrl("/").permitAll());
+        }
         return http.build();
     }
 

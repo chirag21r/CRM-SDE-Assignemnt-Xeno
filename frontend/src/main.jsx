@@ -11,7 +11,7 @@ const withBase = (path) => (/^https?:/i.test(path) ? path : `${API_BASE||''}${pa
 
 // Simple cache to reduce API calls
 const cache = new Map()
-const CACHE_TTL = 30000 // 30 seconds
+const CACHE_TTL = 60000 // 60 seconds for better performance
 
 const api = async (path, options={}) => {
   const fullUrl = withBase(path)
@@ -74,6 +74,28 @@ function LoadingSpinner({ message = "Loading..." }){
   )
 }
 
+function InitialLoadingSkeleton(){
+  return (
+    <div style={{ ...t, minHeight:'100vh' }}>
+      <header style={{ height:60, padding:'0 20px', background:t.bg, borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <div className="loading-skeleton" style={{ width: 200, height: 20, borderRadius: 4 }}></div>
+        <div className="loading-skeleton" style={{ width: 100, height: 20, borderRadius: 4 }}></div>
+      </header>
+      <div style={{ display:'flex', flex: 1 }}>
+        <div style={{ width:220, background:t.bg, minHeight:'calc(100vh - 60px)', borderRight:`1px solid ${t.border}` }}>
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="loading-skeleton" style={{ margin: '12px 14px', height: 20, borderRadius: 4 }}></div>
+          ))}
+        </div>
+        <div style={{ flex:1, padding: '24px' }}>
+          <div className="loading-skeleton" style={{ height: 200, borderRadius: 12, marginBottom: 20 }}></div>
+          <div className="loading-skeleton" style={{ height: 300, borderRadius: 12 }}></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Card({ title, children }){
   return (
     <div style={{ background:t.panel, border:`1px solid ${t.border}`, borderRadius:12, padding:22, margin:'20px 0', boxShadow:'0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.35)' }}>
@@ -105,20 +127,31 @@ function Input({ label, ...props }){
 
 function Login(){
   const [authEnabled, setAuthEnabled] = useState(false)
+  const [isSigningIn, setIsSigningIn] = useState(false)
+  
   useEffect(() => {
     console.log('[Auth] Login mounted: checking /api/public/health')
     api('/api/public/health')
       .then(h => { console.log('[Auth] /api/public/health:', h); setAuthEnabled(!!h.authEnabled) })
       .catch(e => console.log('[Auth] /api/public/health failed:', e))
+    
     // If we returned from OAuth, verify session and go to dashboard
     const search = new URLSearchParams(window.location.search || '')
     const hashParams = new URLSearchParams((window.location.hash.split('?')[1]||''))
     const loginFlag = search.get('login') === 'success' || hashParams.get('login') === 'success' || hashParams.get('login') === '1'
     if (loginFlag) {
       console.log('[Auth] OAuth login flag detected → verifying via /api/me')
+      setIsSigningIn(true)
       api('/api/me')
-        .then(u => { console.log('[Auth] /api/me after OAuth:', u); if (window.showToast) window.showToast('Signed in successfully', 'success'); window.location.hash = '#/dashboard' })
-        .catch(e => { console.log('[Auth] verification after OAuth failed:', e) })
+        .then(u => { 
+          console.log('[Auth] /api/me after OAuth:', u)
+          if (window.showToast) window.showToast('Signed in successfully', 'success')
+          window.location.hash = '#/dashboard'
+        })
+        .catch(e => { 
+          console.log('[Auth] verification after OAuth failed:', e)
+          setIsSigningIn(false)
+        })
     }
   }, [])
   return (
@@ -142,19 +175,32 @@ function Login(){
             <div style={{ marginTop:8 }}>
               <button onClick={()=>{
                 console.log('[Auth] Sign-in clicked. authEnabled=', authEnabled)
+                setIsSigningIn(true)
                 if (authEnabled) {
                   const url = withBase('/oauth2/authorization/google')
                   console.log('[Auth] Redirecting to Google OAuth:', url)
                   window.location.href = url
                 } else {
                   console.log('[Auth] Auth disabled by backend health. Proceeding without OAuth.')
-                  window.location.hash = '#/dashboard'
-                  if (window.showToast) window.showToast('Signed in (dev mode)', 'success')
+                  // Simulate quick sign-in for demo
+                  setTimeout(() => {
+                    window.location.hash = '#/dashboard'
+                    if (window.showToast) window.showToast('Signed in (dev mode)', 'success')
+                    setIsSigningIn(false)
+                  }, 500)
                 }
-              }} style={{
+              }} disabled={isSigningIn} style={{
                 width:'100%', height:42, borderRadius:10,
-                background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer', fontSize:15
-              }}>Sign in</button>
+                background: isSigningIn ? t.subtext : t.text, 
+                color: isSigningIn ? t.bg : '#000', 
+                border:0, fontWeight:700, 
+                cursor: isSigningIn ? 'not-allowed' : 'pointer', 
+                fontSize:15,
+                opacity: isSigningIn ? 0.7 : 1,
+                transition: 'all 0.2s ease'
+              }}>
+                {isSigningIn ? 'Signing in...' : 'Sign in'}
+              </button>
             </div>
           </div>
         </div>
@@ -732,14 +778,10 @@ function App(){
   const [isAuthed,setIsAuthed]=useState(null) // null = checking, false = not authed, true = authed
   
   useEffect(() => {
-    // Check authentication status with timeout
-    const timeoutId = setTimeout(() => {
-      api('/api/me')
-        .then(() => setIsAuthed(true))
-        .catch(() => setIsAuthed(false))
-    }, 100) // Small delay to prevent blocking initial render
-    
-    return () => clearTimeout(timeoutId)
+    // Check authentication status immediately
+    api('/api/me')
+      .then(() => setIsAuthed(true))
+      .catch(() => setIsAuthed(false))
   }, [])
   
   useEffect(()=>{
@@ -808,9 +850,7 @@ function App(){
         </div>
         )})()}
       { isAuthed === null ? (
-          <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>
-            <div style={{ color:t.subtext }}>Loading...</div>
-          </div>
+          <InitialLoadingSkeleton />
         ) : isAuthed === false || route==='#/' || route==='#' ? (
           <Login />
         ) : (

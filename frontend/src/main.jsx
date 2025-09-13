@@ -645,24 +645,38 @@ function App(){
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
-  const [isAuthed,setIsAuthed]=useState(false)
-  const [authChecked,setAuthChecked]=useState(false)
-  
-  const checkAuth = async () => {
-    try {
-      const userData = await api('/api/me')
-      console.log('Auth check success:', userData)
-      setIsAuthed(true)
-    } catch (err) {
-      console.log('Auth check failed:', err)
-      setIsAuthed(false)
-    } finally {
-      setAuthChecked(true)
-    }
-  }
+  const [isAuthed,setIsAuthed]=useState(null) // null = checking, false = not authed, true = authed
   
   useEffect(() => {
-    checkAuth()
+    // Check auth on page load
+    api('/api/me')
+      .then(userData => {
+        console.log('User authenticated:', userData)
+        setIsAuthed(true)
+      })
+      .catch(() => {
+        console.log('User not authenticated')
+        setIsAuthed(false)
+      })
+  }, [])
+  
+  // Handle OAuth success redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    if (params.get('login') === '1') {
+      console.log('OAuth success detected, checking auth...')
+      api('/api/me')
+        .then(userData => {
+          console.log('OAuth login successful:', userData)
+          setIsAuthed(true)
+          window.location.hash = '#/dashboard'
+          if (window.showToast) window.showToast('Signed in successfully', 'success')
+        })
+        .catch(() => {
+          console.log('OAuth login failed')
+          setIsAuthed(false)
+        })
+    }
   }, [])
   useEffect(()=>{
     // ensure no white borders/background
@@ -673,7 +687,6 @@ function App(){
   const doLogout = async ()=>{
     try { await fetch(withBase('/logout'), { method:'POST', credentials:'include' }) } catch(e) {}
     setIsAuthed(false)
-    setAuthChecked(false)
     window.location.hash = '#/'
     if (window.showToast) window.showToast('Logged out', 'error')
   }
@@ -696,8 +709,8 @@ function App(){
         <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text }}>Xeno Mini CRM</div>
         <nav style={{ display:'flex', gap:12, alignItems:'center' }}>
           <a href="#/" style={{ color:t.subtext, textDecoration:'none' }}>Login</a>
-          <a href="#/dashboard" onClick={(e)=>{ if(!isAuthed){ e.preventDefault(); window.location.hash='#/'; if(window.showToast) window.showToast('Please sign in', 'error') } }} style={{ color:t.subtext, textDecoration:'none' }}>Dashboard</a>
-          {isAuthed && (
+          <a href="#/dashboard" onClick={(e)=>{ if(isAuthed !== true){ e.preventDefault(); window.location.hash='#/'; if(window.showToast) window.showToast('Please sign in', 'error') } }} style={{ color:t.subtext, textDecoration:'none' }}>Dashboard</a>
+          {isAuthed === true && (
             <button onClick={doLogout} style={{ marginLeft:12, background:'transparent', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 12px', cursor:'pointer' }}>Logout</button>
           )}
         </nav>
@@ -713,13 +726,11 @@ function App(){
           <div>{msg}</div>
         </div>
         )})()}
-      { (route==='#/' || route==='#') ? (
-          <Login />
-        ) : !authChecked ? (
+      { isAuthed === null ? (
           <div style={{ display:'flex', justifyContent:'center', alignItems:'center', minHeight:'60vh' }}>
             <div style={{ color:t.subtext }}>Loading...</div>
           </div>
-        ) : !isAuthed ? (
+        ) : isAuthed === false || route==='#/' || route==='#' ? (
           <Login />
         ) : (
           <div style={{ display:'flex' }}>

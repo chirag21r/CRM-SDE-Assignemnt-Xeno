@@ -1,6 +1,15 @@
 import React, { useEffect, useState, useMemo, useCallback, lazy, Suspense } from 'react'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend } from 'recharts'
 import { createRoot } from 'react-dom/client'
+
+// Lazy load heavy chart components
+const ResponsiveContainer = lazy(() => import('recharts').then(module => ({ default: module.ResponsiveContainer })))
+const BarChart = lazy(() => import('recharts').then(module => ({ default: module.BarChart })))
+const Bar = lazy(() => import('recharts').then(module => ({ default: module.Bar })))
+const XAxis = lazy(() => import('recharts').then(module => ({ default: module.XAxis })))
+const YAxis = lazy(() => import('recharts').then(module => ({ default: module.YAxis })))
+const CartesianGrid = lazy(() => import('recharts').then(module => ({ default: module.CartesianGrid })))
+const RTooltip = lazy(() => import('recharts').then(module => ({ default: module.Tooltip })))
+const RLegend = lazy(() => import('recharts').then(module => ({ default: module.Legend })))
 
 // Lazy load heavy components - will be defined after components
 
@@ -435,45 +444,63 @@ function Dashboard(){
   const [derivedIncome,setDerivedIncome]=useState(0)
   const [campCards,setCampCards] = useState([])
   const [loading, setLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
+  const [campaignsLoading, setCampaignsLoading] = useState(true)
   
   useEffect(()=>{
     console.log('Dashboard useEffect - making parallel API calls')
     setLoading(true)
+    setStatsLoading(true)
+    setCampaignsLoading(true)
     
-    // Parallel API calls for better performance
-    Promise.all([
-      api('/api/dashboard/stats'),
-      api('/api/customers'),
-      api('/api/campaigns')
-    ]).then(([statsData, customers, campaigns]) => {
-      console.log('Dashboard data received:', { statsData, customers: customers.length, campaigns: campaigns.length })
-      
-      setStats(statsData)
-      
-      // Fallback income computed on frontend
-      const sum = (customers||[]).reduce((acc,c)=> acc + Number(c.totalSpend||0), 0)
-      setDerivedIncome(sum)
-      
-      // Process campaigns with stats in parallel
-      const top = campaigns.slice(-8)
-      return Promise.all(top.map(async c=>{
-        try {
-          const s = await api(`/api/campaigns/${c.id}/stats`)
-          const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
-          return { id:c.id, name:c.name, pct, sent:s.sent, failed:s.failed, total:s.total }
-        } catch (err) {
-          console.log(`Failed to get stats for campaign ${c.id}:`, err)
-          return { id:c.id, name:c.name, pct: 0, sent: 0, failed: 0, total: 0 }
-        }
-      }))
-    }).then(cards => {
-      const delivered = cards.filter(c => (c.sent + c.failed) > 0)
-      setCampCards(delivered.reverse())
-      setLoading(false)
-    }).catch(err => {
-      console.log('Dashboard data failed:', err)
-      setLoading(false)
-    })
+    // Load basic stats first (fastest)
+    api('/api/dashboard/stats')
+      .then(data => {
+        console.log('Dashboard stats received:', data)
+        setStats(data)
+        setStatsLoading(false)
+      })
+      .catch(err => {
+        console.log('Dashboard stats failed:', err)
+        setStatsLoading(false)
+      })
+    
+    // Load customers for income calculation
+    api('/api/customers')
+      .then(customers => {
+        console.log('Customers received:', customers.length)
+        const sum = (customers||[]).reduce((acc,c)=> acc + Number(c.totalSpend||0), 0)
+        setDerivedIncome(sum)
+      })
+      .catch(err => console.log('Customers failed:', err))
+    
+    // Load campaigns and their stats (slowest)
+    api('/api/campaigns')
+      .then(campaigns => {
+        console.log('Campaigns received:', campaigns.length)
+        const top = campaigns.slice(-8)
+        return Promise.all(top.map(async c=>{
+          try {
+            const s = await api(`/api/campaigns/${c.id}/stats`)
+            const pct = s.total ? Math.round((s.sent/s.total)*100) : 0
+            return { id:c.id, name:c.name, pct, sent:s.sent, failed:s.failed, total:s.total }
+          } catch (err) {
+            console.log(`Failed to get stats for campaign ${c.id}:`, err)
+            return { id:c.id, name:c.name, pct: 0, sent: 0, failed: 0, total: 0 }
+          }
+        }))
+      })
+      .then(cards => {
+        const delivered = cards.filter(c => (c.sent + c.failed) > 0)
+        setCampCards(delivered.reverse())
+        setCampaignsLoading(false)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.log('Campaigns failed:', err)
+        setCampaignsLoading(false)
+        setLoading(false)
+      })
   },[])
   // Memoize expensive calculations
   const lastCampaignData = useMemo(() => {
@@ -493,36 +520,52 @@ function Dashboard(){
     const barCards = campCards.slice(0,6)
     return barCards.map(c => ({ name: c.name, success: c.sent, failed: c.failed }))
   }, [campCards])
-  if (loading) {
-    return (
-      <Page>
-        <LoadingSpinner message="Loading dashboard..." />
-      </Page>
-    )
-  }
-
   return (
     <Page>
       <div style={{ display:'grid', gap:16, gridTemplateColumns:'repeat(4, 1fr)', marginBottom:8 }}>
-        <StatCard label="Total Customers" value={stats.totalCustomers} />
-        <StatCard label="Total Orders" value={stats.totalOrders} />
-        <StatCard label="Income" value={formatINR((derivedIncome||0) > 0 ? derivedIncome : (stats.totalIncome||0))} />
+        {statsLoading ? (
+          <>
+            <div className="loading-skeleton" style={{ height: 100, borderRadius: 12 }}></div>
+            <div className="loading-skeleton" style={{ height: 100, borderRadius: 12 }}></div>
+            <div className="loading-skeleton" style={{ height: 100, borderRadius: 12 }}></div>
+          </>
+        ) : (
+          <>
+            <StatCard label="Total Customers" value={stats.totalCustomers} />
+            <StatCard label="Total Orders" value={stats.totalOrders} />
+            <StatCard label="Income" value={formatINR((derivedIncome||0) > 0 ? derivedIncome : (stats.totalIncome||0))} />
+          </>
+        )}
       </div>
       <Card title="Recent Campaigns">
-        <div style={{ margin:'2px 0 10px', height:200 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={campaignData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2d333b" />
-              <XAxis dataKey="name" stroke={t.text} tick={{ fontSize: 10 }} />
-              <YAxis stroke={t.text} tick={{ fontSize: 10 }} />
-              <RTooltip />
-              <RLegend />
-              <Bar dataKey="success" fill={t.green} radius={[6,6,0,0]} barSize={22} />
-              <Bar dataKey="failed" fill={t.red} radius={[6,6,0,0]} barSize={22} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-        <DashboardCampaignTable rows={campCards} />
+        {campaignsLoading ? (
+          <div style={{ padding: '20px 0' }}>
+            <div className="loading-skeleton" style={{ height: 200, marginBottom: 20, borderRadius: 8 }}></div>
+            <div className="loading-skeleton" style={{ height: 20, marginBottom: 10, borderRadius: 4 }}></div>
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="loading-skeleton" style={{ height: 40, marginBottom: 8, borderRadius: 4 }}></div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div style={{ margin:'2px 0 10px', height:200 }}>
+              <Suspense fallback={<div className="loading-skeleton" style={{ height: 200, borderRadius: 8 }}></div>}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={campaignData} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2d333b" />
+                    <XAxis dataKey="name" stroke={t.text} tick={{ fontSize: 10 }} />
+                    <YAxis stroke={t.text} tick={{ fontSize: 10 }} />
+                    <RTooltip />
+                    <RLegend />
+                    <Bar dataKey="success" fill={t.green} radius={[6,6,0,0]} barSize={22} />
+                    <Bar dataKey="failed" fill={t.red} radius={[6,6,0,0]} barSize={22} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Suspense>
+            </div>
+            <DashboardCampaignTable rows={campCards} />
+          </>
+        )}
       </Card>
     </Page>
   )
@@ -606,15 +649,28 @@ function OrdersPage(){
   const [selectedName,setSelectedName]=useState('')
   const [amount,setAmount]=useState('500')
   const [rows,setRows]=useState([])
+  const [loading, setLoading] = useState(true)
+  const [ordersLoading, setOrdersLoading] = useState(true)
+  
   const load = async ()=>{
-    const cs = await api('/api/customers'); setCustomers(cs)
-    // If a customer is selected, show that customer's orders; else show all
-    if (customerId) {
-      setRows(await api(`/api/orders?customerId=${encodeURIComponent(customerId)}`))
-    } else {
-      setRows(await api('/api/orders'))
+    setLoading(true)
+    try {
+      const cs = await api('/api/customers'); 
+      setCustomers(cs)
+      
+      // Load orders in parallel
+      setOrdersLoading(true)
+      if (customerId) {
+        setRows(await api(`/api/orders?customerId=${encodeURIComponent(customerId)}`))
+      } else {
+        setRows(await api('/api/orders'))
+      }
+    } finally {
+      setLoading(false)
+      setOrdersLoading(false)
     }
   }
+  
   useEffect(()=>{ load() },[])
   const save = async ()=>{ await api('/api/orders',{ method:'POST', body: JSON.stringify({ customerId, amount })}); setAmount('500'); await load() }
   return (
@@ -636,26 +692,35 @@ function OrdersPage(){
         </div>
       </Card>
       <Card title="Orders">
-        <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
-          <thead style={{ background:t.stripe1 }}>
-            <tr>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Customer</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Amount</th>
-              <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((o,i) => (
-              <tr key={o.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
-                <td style={{ padding:'10px 8px' }}>{o.id}</td>
-                <td style={{ padding:'10px 8px' }}>{o.customerName}</td>
-                <td style={{ padding:'10px 8px' }}>{o.amount}</td>
-                <td style={{ padding:'10px 8px' }}>{o.date||''}</td>
-              </tr>
+        {ordersLoading ? (
+          <div style={{ padding: '20px 0' }}>
+            <div className="loading-skeleton" style={{ height: 20, marginBottom: 10, borderRadius: 4 }}></div>
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="loading-skeleton" style={{ height: 40, marginBottom: 8, borderRadius: 4 }}></div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        ) : (
+          <table style={{ width:'100%', borderCollapse:'collapse', color:t.text }}>
+            <thead style={{ background:t.stripe1 }}>
+              <tr>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>ID</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Customer</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Amount</th>
+                <th style={{ textAlign:'left', padding:'10px 8px', borderBottom:`1px solid ${t.border}` }}>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((o,i) => (
+                <tr key={o.id} style={{ background: i%2? t.stripe1 : t.stripe2 }}>
+                  <td style={{ padding:'10px 8px' }}>{o.id}</td>
+                  <td style={{ padding:'10px 8px' }}>{o.customerName}</td>
+                  <td style={{ padding:'10px 8px' }}>{o.amount}</td>
+                  <td style={{ padding:'10px 8px' }}>{o.date||''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </Card>
     </Page>
   )
@@ -782,7 +847,12 @@ function App(){
     api('/api/me')
       .then(() => setIsAuthed(true))
       .catch(() => setIsAuthed(false))
-  }, [])
+    
+    // Preload critical data for faster navigation
+    if (route.startsWith('#/dashboard')) {
+      api('/api/dashboard/stats').catch(() => {})
+    }
+  }, [route])
   
   useEffect(()=>{
     // ensure no white borders/background

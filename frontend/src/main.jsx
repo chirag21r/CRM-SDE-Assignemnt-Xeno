@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Legend as RLegend } from 'recharts'
 import { createRoot } from 'react-dom/client'
 
+// UPDATED: Force new build with correct backend URL
 const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'https://crm-sde-assignemnt-xeno.onrender.com'
+console.log('🚀 Frontend loaded with API_BASE:', API_BASE)
 const withBase = (path) => (/^https?:/i.test(path) ? path : `${API_BASE||''}${path}`)
 const api = async (path, options={}) => {
   const fullUrl = withBase(path)

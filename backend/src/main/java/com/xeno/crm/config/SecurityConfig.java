@@ -29,10 +29,10 @@ import java.util.List;
 public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
-    @Value("${GOOGLE_CLIENT_ID:}")
+    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
     private String googleClientId;
     
-    @Value("${GOOGLE_CLIENT_SECRET:}")
+    @Value("${spring.security.oauth2.client.registration.google.client-secret:}")
     private String googleClientSecret;
 
     @Value("${app.frontend.url:http://localhost:5173}")
@@ -44,6 +44,9 @@ public class SecurityConfig {
         boolean hasClientSecret = googleClientSecret != null && !googleClientSecret.isBlank();
         log.info("SecurityConfig initialized with frontendUrl: {} hasClientId: {} hasClientSecret: {}", 
                 frontendUrl, hasClientId, hasClientSecret);
+        log.info("GOOGLE_CLIENT_ID env: {}", System.getenv("GOOGLE_CLIENT_ID") != null ? "SET" : "NOT_SET");
+        log.info("GOOGLE_CLIENT_SECRET env: {}", System.getenv("GOOGLE_CLIENT_SECRET") != null ? "SET" : "NOT_SET");
+        log.info("Resolved clientId: {}", googleClientId != null ? googleClientId.substring(0, Math.min(10, googleClientId.length())) + "..." : "null");
     }
 
     @Bean

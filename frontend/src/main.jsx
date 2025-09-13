@@ -14,6 +14,13 @@ const withBase = (path) => (/^https?:/i.test(path) ? path : `${API_BASE||''}${pa
 const cache = new Map()
 const CACHE_TTL = 60000 // 60 seconds for better performance
 
+// Helper function to clear cache for fresh data
+const clearCache = (endpoint) => {
+  const baseUrl = API_BASE || 'https://crm-sde-assignemnt-xeno.onrender.com'
+  const fullUrl = `${baseUrl}${endpoint}`
+  cache.delete(`GET:${fullUrl}`)
+}
+
 const api = async (path, options={}) => {
   const fullUrl = withBase(path)
   const cacheKey = `${options.method || 'GET'}:${fullUrl}`
@@ -231,7 +238,7 @@ function Customers({ onSaved }){
   )
 }
 
-function Orders(){
+function Orders({ onSaved }){
   const [customerId, setCustomerId] = useState('')
   const [amount, setAmount] = useState('500')
   const [customers, setCustomers] = useState([])
@@ -240,6 +247,7 @@ function Orders(){
   const save = async () => {
     await api('/api/orders', { method:'POST', body: JSON.stringify({ customerId, amount }) })
     setAmount('500')
+    if (onSaved) onSaved()
   }
   return (
     <Card title="Add Order">
@@ -598,7 +606,11 @@ function DashboardCampaignTable({ rows }){
 function CustomersPage(){
   const [q,setQ] = useState('')
   const [rows,setRows] = useState([])
-  const search = async () => setRows(await api(`/api/customers${q?`?search=${encodeURIComponent(q)}`:''}`))
+  const search = async () => {
+    // Clear cache for fresh data
+    clearCache('/api/customers')
+    setRows(await api(`/api/customers${q?`?search=${encodeURIComponent(q)}`:''}`))
+  }
   useEffect(()=>{ search() },[])
   return (
     <Page>
@@ -649,6 +661,10 @@ function OrdersPage(){
   const load = async ()=>{
     setLoading(true)
     try {
+      // Clear cache for fresh data
+      clearCache('/api/customers')
+      clearCache('/api/orders')
+      
       const cs = await api('/api/customers'); 
       setCustomers(cs)
       
@@ -669,22 +685,7 @@ function OrdersPage(){
   const save = async ()=>{ await api('/api/orders',{ method:'POST', body: JSON.stringify({ customerId, amount })}); setAmount('500'); await load() }
   return (
     <Page>
-      <Card title="Add Order">
-        <div style={{ display:'grid', gap:16, gridTemplateColumns:'1fr 1fr' }}>
-          <div style={{ display:'flex', flexDirection:'column' }}>
-            <small style={{ color:t.subtext, marginBottom:6 }}>Customer Email</small>
-            <select value={customerId} onChange={async e=>{ const id=e.target.value; setCustomerId(id); const f=customers.find(c=> String(c.id)===String(id)); setSelectedName(f? f.name : ''); const data = id? await api(`/api/orders?customerId=${encodeURIComponent(id)}`) : await api('/api/orders'); setRows(data) }} style={{ background:t.panel, color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 10px', height:40 }}>
-              <option value="">Select</option>
-              {customers.map(c=> <option key={c.id} value={c.id}>{c.email}</option>)}
-            </select>
-            {selectedName && <small style={{ color:t.subtext, marginTop:6 }}>Name: {selectedName}</small>}
-          </div>
-          <Input label="Amount (₹)" value={amount} onChange={e=>setAmount(e.target.value)} />
-        </div>
-        <div style={{ display:'flex', justifyContent:'flex-end', marginTop:10 }}>
-          <Button onClick={save}>Save</Button>
-        </div>
-      </Card>
+      <Orders onSaved={load} />
       <Card title="Orders">
         {ordersLoading ? (
           <div style={{ padding: '20px 0' }}>

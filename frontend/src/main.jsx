@@ -99,14 +99,18 @@ function Login(){
             </div>
             <div style={{ marginTop:10 }}>
               <button onClick={()=>{
-                // ALWAYS REDIRECT TO DASHBOARD FOR TESTING
-                console.log('Sign in clicked - redirecting to dashboard for testing')
-                window.location.hash = '#/dashboard'
-                if (window.showToast) window.showToast('Signed in successfully (testing mode)', 'success')
+                if (authEnabled) {
+                  console.log('Starting OAuth flow...')
+                  window.location.href = withBase('/oauth2/authorization/google')
+                } else {
+                  console.log('Auth not enabled - redirecting to dashboard')
+                  window.location.hash = '#/dashboard'
+                  if (window.showToast) window.showToast('Signed in (dev mode)', 'success')
+                }
               }} style={{
                 width:'100%', height:46, borderRadius:10,
                 background:t.text, color:'#000', border:0, fontWeight:700, cursor:'pointer'
-              }}>Sign in (Testing Mode)</button>
+              }}>Sign in with Google</button>
               {!authEnabled && (
                 <div style={{ marginTop:10, display:'flex', gap:10 }}>
                   <div style={{ color:t.subtext, fontSize:12, flex:1 }}>Google login not configured (dev mode).
@@ -649,36 +653,48 @@ function App(){
   const [isAuthed,setIsAuthed]=useState(null) // null = checking, false = not authed, true = authed
   
   useEffect(() => {
-    // Check auth on page load - ALWAYS SET TO AUTHENTICATED FOR TESTING
+    // Check auth on page load
     api('/api/me')
       .then(userData => {
         console.log('User authenticated:', userData)
         setIsAuthed(true)
       })
       .catch(() => {
-        console.log('API call failed, but setting authenticated for testing')
-        setIsAuthed(true) // ALWAYS SET TO TRUE FOR TESTING
+        console.log('User not authenticated')
+        setIsAuthed(false)
       })
   }, [])
   
-  // Handle OAuth success redirect
+  // Handle OAuth success/error redirect
   useEffect(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
-    if (params.get('login') === '1') {
+    const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1] || '')
+    
+    if (params.get('login') === 'success') {
       console.log('OAuth success detected, checking auth...')
       api('/api/me')
         .then(userData => {
           console.log('OAuth login successful:', userData)
           setIsAuthed(true)
-          window.location.hash = '#/dashboard'
           if (window.showToast) window.showToast('Signed in successfully', 'success')
+          // Clean URL
+          window.location.hash = '#/dashboard'
         })
         .catch(() => {
-          console.log('OAuth login failed')
+          console.log('OAuth login verification failed')
           setIsAuthed(false)
         })
+    } else if (params.get('login') === 'error') {
+      console.log('OAuth login failed:', params.get('reason'))
+      setIsAuthed(false)
+      if (window.showToast) window.showToast('Sign in failed: ' + (params.get('reason') || 'Unknown error'), 'error')
+      window.location.hash = '#/'
+    } else if (params.get('logout') === 'success') {
+      console.log('Logout successful')
+      setIsAuthed(false)
+      if (window.showToast) window.showToast('Signed out successfully', 'error')
+      window.location.hash = '#/'
     }
-  }, [])
+  }, [route])
   useEffect(()=>{
     // ensure no white borders/background
     document.documentElement.style.background = t.bg
@@ -686,10 +702,15 @@ function App(){
     document.body.style.margin = '0'
   }, [])
   const doLogout = async ()=>{
-    try { await fetch(withBase('/logout'), { method:'POST', credentials:'include' }) } catch(e) {}
+    try { 
+      await fetch(withBase('/logout'), { method:'POST', credentials:'include' })
+      console.log('Logout request sent')
+    } catch(e) {
+      console.log('Logout request failed:', e)
+    }
     setIsAuthed(false)
     window.location.hash = '#/'
-    if (window.showToast) window.showToast('Logged out', 'error')
+    if (window.showToast) window.showToast('Signed out', 'error')
   }
   const isProtected = (r)=> ['#/dashboard','#/customers','#/orders','#/segment','#/create-campaign','#/campaigns','#/ai'].some(p=> (r||'').startsWith(p))
   const dark = { background:t.bg, color:t.text }

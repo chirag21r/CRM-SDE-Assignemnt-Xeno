@@ -80,8 +80,56 @@ public class SecurityConfig {
                 filterChain.doFilter(request, response);
             }
         }, UsernamePasswordAuthenticationFilter.class);
-        // DISABLE AUTHENTICATION FOR TESTING - Allow all requests
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        if (!googleEnabled) {
+            // No Google OAuth configured - allow all for development
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+            log.warn("Google OAuth not configured - running in open mode");
+        } else {
+            // Google OAuth configured - enable authentication
+            http
+                .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
+                        "/", "/index.html", "/assets/**", "/static/**",
+                        "/login**", "/oauth2/**", "/login/oauth2/**", "/error"
+                    ).permitAll()
+                    .requestMatchers("/api/public/**", "/api/ai/**").permitAll()
+                    .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                    .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                    .defaultAuthenticationEntryPointFor((request, response, authException) -> {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        try (java.io.PrintWriter w = response.getWriter()) {
+                            w.write("{\"error\":\"unauthenticated\"}");
+                        }
+                    }, new AntPathRequestMatcher("/api/**"))
+                )
+                .oauth2Login(oauth -> oauth
+                    .authorizationEndpoint(authorization -> 
+                        authorization.authorizationRequestRepository(authorizationRequestRepository())
+                    )
+                    .loginPage("/oauth2/authorization/google")
+                    .successHandler((req, res, auth) -> {
+                        log.info("OAuth2 login successful for user: {}", auth.getName());
+                        var session = req.getSession(true);
+                        log.info("Session created: ID={} isNew={}", session.getId(), session.isNew());
+                        res.sendRedirect(frontendUrl + "/#/dashboard?login=success");
+                    })
+                    .failureHandler((req, res, ex) -> {
+                        log.error("OAuth2 login failed: {}", ex.getMessage());
+                        String reason = java.net.URLEncoder.encode(ex.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+                        res.sendRedirect(frontendUrl + "/#/?login=error&reason=" + reason);
+                    })
+                )
+                .logout(logout -> logout
+                    .logoutUrl("/logout")
+                    .logoutSuccessHandler((req, res, auth) -> {
+                        res.sendRedirect(frontendUrl + "/#/?logout=success");
+                    })
+                    .permitAll()
+                );
+        }
         return http.build();
     }
 

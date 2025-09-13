@@ -238,12 +238,14 @@ public class ApiControllers {
         return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled, "frontendUrl", frontendUrl);
     }
 
-    // Current user (for frontend auth check) - ALWAYS RETURN AUTHENTICATED FOR TESTING
+    // Current user (for frontend auth check)
     @GetMapping("/me")
     public ResponseEntity<?> me(java.security.Principal principal) {
-        log.debug("GET /api/me principal={} - RETURNING FAKE AUTH FOR TESTING", principal!=null? principal.getName(): null);
-        // Always return authenticated user for testing
-        return ResponseEntity.ok(Map.<String, Object>of("name", "test-user-authenticated"));
+        log.debug("GET /api/me principal={}", principal!=null? principal.getName(): null);
+        if (principal == null) {
+            return ResponseEntity.status(401).body(Map.<String, Object>of("error", "unauthenticated"));
+        }
+        return ResponseEntity.ok(Map.<String, Object>of("name", principal.getName()));
     }
 }
 

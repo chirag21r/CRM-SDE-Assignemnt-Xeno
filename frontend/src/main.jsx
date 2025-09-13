@@ -895,7 +895,9 @@ function App(){
       <header style={{ height:60, padding:'0 20px', background:t.bg, borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text, fontSize:17 }}>Xeno Mini CRM</div>
         <nav style={{ display:'flex', gap:12, alignItems:'center' }}>
-          <a href="#/" style={{ color:t.subtext, textDecoration:'none', fontSize:f.nav, fontWeight:500 }}>Login</a>
+          {isAuthed !== true && (
+            <a href="#/" style={{ color:t.subtext, textDecoration:'none', fontSize:f.nav, fontWeight:500 }}>Login</a>
+          )}
           <a href="#/dashboard" onClick={(e)=>{ const onLogin = (route === '#/' || route === '#'); if(onLogin || isAuthed !== true ){ e.preventDefault(); window.location.hash='#/'; if(window.showToast) window.showToast('Please sign in', 'error') } }} style={{ color:t.subtext, textDecoration:'none', fontSize:f.nav, fontWeight:500 }}>Dashboard</a>
           {isAuthed === true && !(route === '#/' || route === '#') && (
             <button onClick={doLogout} style={{ marginLeft:12, background:'transparent', color:t.text, border:`1px solid ${t.border}`, borderRadius:8, padding:'8px 12px', cursor:'pointer', fontSize:13.5 }}>Logout</button>

@@ -29,15 +29,21 @@ import java.util.List;
 public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id:}")
+    @Value("${GOOGLE_CLIENT_ID:}")
     private String googleClientId;
+    
+    @Value("${GOOGLE_CLIENT_SECRET:}")
+    private String googleClientSecret;
 
     @Value("${app.frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
     @jakarta.annotation.PostConstruct
     public void logConfig() {
-        log.info("SecurityConfig initialized with frontendUrl: {}", frontendUrl);
+        boolean hasClientId = googleClientId != null && !googleClientId.isBlank();
+        boolean hasClientSecret = googleClientSecret != null && !googleClientSecret.isBlank();
+        log.info("SecurityConfig initialized with frontendUrl: {} hasClientId: {} hasClientSecret: {}", 
+                frontendUrl, hasClientId, hasClientSecret);
     }
 
     @Bean
@@ -52,7 +58,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        boolean googleEnabled = googleClientId != null && !googleClientId.isBlank();
+        boolean googleEnabled = googleClientId != null && !googleClientId.isBlank() 
+                               && googleClientSecret != null && !googleClientSecret.isBlank();
         http.csrf(csrf -> csrf.disable())
             .cors(Customizer.withDefaults())
             .sessionManagement(session -> session

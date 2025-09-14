@@ -21,6 +21,19 @@ const clearCache = (endpoint) => {
   cache.delete(`GET:${fullUrl}`)
 }
 
+// Keep-alive mechanism to prevent backend sleep
+const keepAlive = async () => {
+  try {
+    await api('/api/public/keepalive')
+    console.log('Keep-alive ping sent')
+  } catch (e) {
+    console.warn('Keep-alive ping failed:', e.message)
+  }
+}
+
+// Ping backend every 5 minutes to keep it awake
+setInterval(keepAlive, 5 * 60 * 1000) // 5 minutes
+
 const api = async (path, options={}) => {
   const fullUrl = withBase(path)
   const cacheKey = `${options.method || 'GET'}:${fullUrl}`

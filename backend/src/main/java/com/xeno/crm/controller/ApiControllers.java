@@ -239,6 +239,13 @@ public class ApiControllers {
         return Map.<String, Object>of("status", "ok", "authEnabled", authEnabled, "frontendUrl", frontendUrl);
     }
 
+    // Keep-alive endpoint to prevent sleep
+    @GetMapping("/public/keepalive")
+    public Map<String, Object> keepAlive() {
+        log.debug("GET /api/public/keepalive - keeping backend awake");
+        return Map.<String, Object>of("status", "awake", "timestamp", System.currentTimeMillis());
+    }
+
     // Current user (for frontend auth check)
     @GetMapping("/me")
     public ResponseEntity<?> me(java.security.Principal principal) {

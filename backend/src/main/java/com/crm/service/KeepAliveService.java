@@ -1,4 +1,4 @@
-package com.xeno.crm.service;
+package com.crm.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ public class KeepAliveService {
     @Value("${app.frontend.url:https://mini-crm-iqd4.onrender.com}")
     private String frontendUrl;
     
-    @Value("${app.backend.url:https://crm-sde-assignemnt-xeno.onrender.com}")
+    @Value("${app.backend.url:https://crm-sde-assignemnt.onrender.com}")
     private String backendUrl;
     
     // Ping keep-alive endpoint every 10 minutes to prevent sleep

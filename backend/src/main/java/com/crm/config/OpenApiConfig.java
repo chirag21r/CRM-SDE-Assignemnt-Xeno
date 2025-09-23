@@ -1,4 +1,4 @@
-package com.xeno.crm.config;
+package com.crm.config;
 
 import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -11,7 +11,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI api() {
         return new OpenAPI()
-                .info(new Info().title("Xeno Mini CRM API").version("v1"))
+                .info(new Info().title("Mini CRM API").version("v1"))
                 .externalDocs(new ExternalDocumentation().description("Swagger UI").url("/swagger-ui.html"));
     }
 }

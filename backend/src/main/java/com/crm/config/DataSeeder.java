@@ -1,7 +1,7 @@
-package com.xeno.crm.config;
+package com.crm.config;
 
-import com.xeno.crm.model.Customer;
-import com.xeno.crm.repository.CustomerRepository;
+import com.crm.model.Customer;
+import com.crm.repository.CustomerRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

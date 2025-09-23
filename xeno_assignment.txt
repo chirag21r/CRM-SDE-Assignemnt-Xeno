@@ -1,6 +1,6 @@
-Xeno SDE Internship Assignment – 2025
+SDE Internship Assignment – 2025
 Hi there!   👋​
-Thanks for applying to the SDE Internship position at Xeno. We’re excited to get to know you
+Thanks for applying to the SDE Internship position. We're excited to get to know you
 through this hands-on assignment that reflects the kind of real-world challenges we solve every
 day.
 
@@ -194,5 +194,5 @@ This is your chance to show not just what you know — but how you solve, create
 
 
 We're excited to see what you build!   🚀
-Check us out at: https://www.getxeno.com
+Check us out at: https://www.example.com
 

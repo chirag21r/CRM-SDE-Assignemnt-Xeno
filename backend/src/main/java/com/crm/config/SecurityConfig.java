@@ -1,4 +1,4 @@
-package com.xeno.crm.config;
+package com.crm.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;

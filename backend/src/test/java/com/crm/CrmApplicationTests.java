@@ -1,10 +1,10 @@
-package com.xeno.crm;
+package com.crm;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class CrmXenoApplicationTests {
+class CrmApplicationTests {
 
 	@Test
 	void contextLoads() {

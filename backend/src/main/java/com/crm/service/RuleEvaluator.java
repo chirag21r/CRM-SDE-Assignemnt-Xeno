@@ -1,8 +1,8 @@
-package com.xeno.crm.service;
+package com.crm.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xeno.crm.model.Customer;
+import com.crm.model.Customer;
 
 public class RuleEvaluator {
     private final ObjectMapper objectMapper = new ObjectMapper();

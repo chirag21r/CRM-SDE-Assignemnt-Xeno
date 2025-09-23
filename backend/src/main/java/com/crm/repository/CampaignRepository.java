@@ -1,6 +1,6 @@
-package com.xeno.crm.repository;
+package com.crm.repository;
 
-import com.xeno.crm.model.Campaign;
+import com.crm.model.Campaign;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface CampaignRepository extends JpaRepository<Campaign, Long> {}

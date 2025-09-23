@@ -1,4 +1,4 @@
-Xeno CRM Backend (Spring Boot)
+CRM Backend (Spring Boot)
 
 Live frontend
 - https://mini-crm-iqd4.onrender.com
@@ -11,7 +11,7 @@ Requirements
 - MySQL 8+
 
 Environment variables
-- DB_URL=jdbc:mysql://localhost:3306/xeno_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+- DB_URL=jdbc:mysql://localhost:3306/crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 - DB_USERNAME=root
 - DB_PASSWORD=<your_password>
 - FRONTEND_URL=http://localhost:5173
@@ -22,14 +22,14 @@ Environment variables
 - GROQ_API_KEY=<optional>
 
 Run locally
-1) Create DB: CREATE DATABASE xeno_crm;
+1) Create DB: CREATE DATABASE crm;
 2) Export the environment variables listed above
 3) Build and run
    ./mvnw -DskipTests package
    java -jar target/*.jar --server.port=8081
 4) Swagger UI
    http://localhost:8081/swagger-ui/index.html
-   Deployed: https://crm-sde-assignemnt-xeno.onrender.com/swagger-ui/index.html
+   Deployed: https://crm-sde-assignemnt.onrender.com/swagger-ui/index.html
 
 Key endpoints
 - POST /api/customers { name, email }

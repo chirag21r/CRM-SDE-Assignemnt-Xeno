@@ -1,12 +1,12 @@
-package com.xeno.crm.model;
+package com.crm.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "segments")
-public class Segment {
+@Table(name = "campaigns")
+public class Campaign {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -14,19 +14,26 @@ public class Segment {
     @NotBlank
     private String name;
 
-    // JSON of rule tree for simple AND/OR conditions (store as plain TEXT for Postgres)
-    @Column(columnDefinition = "TEXT")
-    private String ruleJson;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "segment_id")
+    private Segment segment;
+
+    // message template to send
+    @NotBlank
+    @Column(length = 500)
+    private String message;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    // getters and setters
+    // getters/setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public String getRuleJson() { return ruleJson; }
-    public void setRuleJson(String ruleJson) { this.ruleJson = ruleJson; }
+    public Segment getSegment() { return segment; }
+    public void setSegment(Segment segment) { this.segment = segment; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -1,9 +1,9 @@
-package com.xeno.crm.controller;
+package com.crm.controller;
 
-import com.xeno.crm.model.*;
-import com.xeno.crm.repository.*;
-import com.xeno.crm.service.CampaignService;
-import com.xeno.crm.service.VendorSimulatorService;
+import com.crm.model.*;
+import com.crm.repository.*;
+import com.crm.service.CampaignService;
+import com.crm.service.VendorSimulatorService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +113,7 @@ public class ApiControllers {
         log.debug("POST /api/segments/preview body.keys={}", body.keySet());
         String ruleJson = Objects.toString(body.get("ruleJson"), "");
         List<Customer> customers = customerRepository.findAll();
-        com.xeno.crm.service.RuleEvaluator evaluator = new com.xeno.crm.service.RuleEvaluator();
+        com.crm.service.RuleEvaluator evaluator = new com.crm.service.RuleEvaluator();
         long count = customers.stream().filter(c -> evaluator.matches(c, ruleJson)).count();
         return Map.<String, Object>of("audienceSize", count);
     }
@@ -122,7 +122,7 @@ public class ApiControllers {
         log.debug("GET /api/segments/{}/preview-size", id);
         Segment s = segmentRepository.findById(id).orElseThrow();
         List<Customer> customers = customerRepository.findAll();
-        com.xeno.crm.service.RuleEvaluator evaluator = new com.xeno.crm.service.RuleEvaluator();
+        com.crm.service.RuleEvaluator evaluator = new com.crm.service.RuleEvaluator();
         long count = customers.stream().filter(c -> evaluator.matches(c, s.getRuleJson())).count();
         return Map.<String, Object>of("segmentId", id, "audienceSize", count);
     }

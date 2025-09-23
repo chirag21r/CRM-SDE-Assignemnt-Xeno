@@ -1,4 +1,4 @@
-# Xeno Mini CRM
+# Mini CRM
 
 **Live Demo:** https://mini-crm-iqd4.onrender.com
 Please wait for some minutes for site to load.
@@ -62,14 +62,14 @@ The frontend development server automatically proxies API calls, OAuth routes, a
 
 **Step 1: Set up the database**
 ```sql
-CREATE DATABASE xeno_crm;
+CREATE DATABASE crm;
 ```
 
 **Step 2: Configure the backend**
 
 Set these environment variables:
 ```bash
-export DB_URL="jdbc:mysql://localhost:3306/xeno_crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+export DB_URL="jdbc:mysql://localhost:3306/crm?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
 export DB_USERNAME="root"
 export DB_PASSWORD="your_mysql_password"
 export FRONTEND_URL="http://localhost:5173"

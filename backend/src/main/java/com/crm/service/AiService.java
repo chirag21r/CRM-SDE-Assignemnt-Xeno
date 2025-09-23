@@ -1,4 +1,4 @@
-package com.xeno.crm.service;
+package com.crm.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

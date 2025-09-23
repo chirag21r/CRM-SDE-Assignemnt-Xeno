@@ -28,7 +28,7 @@ The backend goes to sleep after periods of inactivity on Render's free tier, cau
 ### 3. Keep-Alive HTML Page
 - **File**: `keepalive.html`
 - **Function**: Standalone page that pings backend
-- **Access**: `https://crm-sde-assignemnt-xeno.onrender.com/keepalive.html`
+- **Access**: `https://crm-sde-assignemnt.onrender.com/keepalive.html`
 - **Auto-refresh**: Every 5 minutes
 
 ### 4. Scheduled Tasks
@@ -60,11 +60,11 @@ The backend goes to sleep after periods of inactivity on Render's free tier, cau
 
 ### Check Backend Status:
 ```bash
-curl https://crm-sde-assignemnt-xeno.onrender.com/api/public/keepalive
+curl https://crm-sde-assignemnt.onrender.com/api/public/keepalive
 ```
 
 ### Check Keep-Alive Page:
-Visit: `https://crm-sde-assignemnt-xeno.onrender.com/keepalive.html`
+Visit: `https://crm-sde-assignemnt.onrender.com/keepalive.html`
 
 ### Expected Response:
 ```json

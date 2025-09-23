@@ -1,7 +1,7 @@
-package com.xeno.crm.service;
+package com.crm.service;
 
-import com.xeno.crm.model.CommunicationLog;
-import com.xeno.crm.repository.CommunicationLogRepository;
+import com.crm.model.CommunicationLog;
+import com.crm.repository.CommunicationLogRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 

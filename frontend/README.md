@@ -1,4 +1,4 @@
-Xeno CRM Frontend (React + Vite)
+CRM Frontend (React + Vite)
 
 Live demo
 - https://mini-crm-iqd4.onrender.com

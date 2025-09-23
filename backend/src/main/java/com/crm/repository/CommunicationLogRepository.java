@@ -1,6 +1,6 @@
-package com.xeno.crm.repository;
+package com.crm.repository;
 
-import com.xeno.crm.model.CommunicationLog;
+import com.crm.model.CommunicationLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

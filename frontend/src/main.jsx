@@ -6,7 +6,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 // Lazy load heavy components - will be defined after components
 
 // UPDATED: Force new build with correct backend URL
-const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'https://crm-sde-assignemnt-xeno.onrender.com'
+const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : 'https://crm-sde-assignemnt.onrender.com'
 console.log('🚀 Frontend loaded with API_BASE:', API_BASE)
 const withBase = (path) => (/^https?:/i.test(path) ? path : `${API_BASE||''}${path}`)
 
@@ -16,7 +16,7 @@ const CACHE_TTL = 60000 // 60 seconds for better performance
 
 // Helper function to clear cache for fresh data
 const clearCache = (endpoint) => {
-  const baseUrl = API_BASE || 'https://crm-sde-assignemnt-xeno.onrender.com'
+  const baseUrl = API_BASE || 'https://crm-sde-assignemnt.onrender.com'
   const fullUrl = `${baseUrl}${endpoint}`
   cache.delete(`GET:${fullUrl}`)
 }
@@ -907,7 +907,7 @@ function App(){
   return (
     <div style={{ ...dark, minHeight:'100vh' }}>
       <header style={{ height:60, padding:'0 20px', background:t.bg, borderBottom:`1px solid ${t.border}`, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-        <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text, fontSize:17 }}>Xeno Mini CRM</div>
+        <div style={{ fontWeight:800, letterSpacing:0.5, color:t.text, fontSize:17 }}>Mini CRM</div>
         <nav style={{ display:'flex', gap:12, alignItems:'center' }}>
           {isAuthed !== true && (
             <a href="#/" style={{ color:t.subtext, textDecoration:'none', fontSize:f.nav, fontWeight:500 }}>Login</a>

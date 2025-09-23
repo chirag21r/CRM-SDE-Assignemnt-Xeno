@@ -1,9 +1,9 @@
-package com.xeno.crm.controller;
+package com.crm.controller;
 
-import com.xeno.crm.service.AiService;
+import com.crm.service.AiService;
 import org.springframework.web.bind.annotation.*;
 import java.util.*;
-
+// Successfully connected to the AI service
 @RestController
 @RequestMapping("/api/ai")
 public class AiController {

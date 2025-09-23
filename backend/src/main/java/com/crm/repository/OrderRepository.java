@@ -1,6 +1,6 @@
-package com.xeno.crm.repository;
+package com.crm.repository;
 
-import com.xeno.crm.model.Order;
+import com.crm.model.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

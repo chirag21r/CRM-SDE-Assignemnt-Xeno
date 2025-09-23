@@ -1,6 +1,6 @@
-package com.xeno.crm.repository;
+package com.crm.repository;
 
-import com.xeno.crm.model.Customer;
+import com.crm.model.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 

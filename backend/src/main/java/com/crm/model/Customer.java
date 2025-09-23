@@ -1,4 +1,4 @@
-package com.xeno.crm.model;
+package com.crm.model;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;

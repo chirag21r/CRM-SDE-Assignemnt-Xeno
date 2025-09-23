@@ -1,7 +1,7 @@
-package com.xeno.crm.service;
+package com.crm.service;
 
-import com.xeno.crm.model.*;
-import com.xeno.crm.repository.*;
+import com.crm.model.*;
+import com.crm.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

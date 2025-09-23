@@ -130,31 +130,7 @@ Here are the main endpoints you'll probably use:
 **System**
 - `GET /api/public/health` - Check if everything's running
 
-## Authentication Setup
 
-**Development Mode:** By default, the app runs without authentication to make testing easier.
-
-**Production Mode:** To enable Google OAuth:
-1. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your backend environment
-2. In the frontend, edit `src/main.jsx` and remove the line that forces `isAuthed` to `true`
-
-## Deploying to Production
-
-**Backend (using Render):**
-- Set start command: `java -jar target/*.jar --server.port=$PORT`
-- Add all your environment variables in the Render dashboard
-- Make sure `FRONTEND_URL` matches your deployed frontend URL
-
-**Frontend (using Render Static Sites):**
-- Point to the `dist/` folder after build
-- Set up URL rewrites so API calls (`/api`, `/oauth2`, `/login`, `/logout`) get routed to your backend service
-
-## What I didn't include
-
-I intentionally kept the architecture simple for this demo. In a real production system, you'd probably want to add:
-- Message queues for decoupling write operations
-- More sophisticated error handling and retry logic  
-- Database connection pooling and optimization
 - Comprehensive logging and monitoring
 
 The codebase is structured to make it easy to add these features later if needed.

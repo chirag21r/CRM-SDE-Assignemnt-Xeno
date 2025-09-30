@@ -32,7 +32,7 @@ const keepAlive = async () => {
 }
 
 // Ping backend every 5 minutes to keep it awake
-setInterval(keepAlive, 5 * 60 * 1000) // 5 minutes
+// setInterval(keepAlive, 5 * 60 * 1000) // 5 minutes
 
 const api = async (path, options={}) => {
   const fullUrl = withBase(path)

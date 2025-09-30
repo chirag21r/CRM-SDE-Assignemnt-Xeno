@@ -19,27 +19,27 @@ public class KeepAliveService {
     private String backendUrl;
     
     // Ping keep-alive endpoint every 10 minutes to prevent sleep
-    @Scheduled(fixedRate = 600000) // 10 minutes in milliseconds
-    public void keepAlive() {
-        try {
-            String keepAliveUrl = backendUrl + "/api/public/keepalive";
-            log.debug("Pinging keep-alive endpoint: {}", keepAliveUrl);
-            
-            var response = restTemplate.getForObject(keepAliveUrl, java.util.Map.class);
-            log.debug("Keep-alive response: {}", response);
-        } catch (Exception e) {
-            log.warn("Keep-alive ping failed: {}", e.getMessage());
-        }
-    }
+    // @Scheduled(fixedRate = 600000) // 10 minutes in milliseconds
+    // public void keepAlive() {
+    //     try {
+    //         String keepAliveUrl = backendUrl + "/api/public/keepalive";
+    //         log.debug("Pinging keep-alive endpoint: {}", keepAliveUrl);
+    //         
+    //         var response = restTemplate.getForObject(keepAliveUrl, java.util.Map.class);
+    //         log.debug("Keep-alive response: {}", response);
+    //     } catch (Exception e) {
+    //         log.warn("Keep-alive ping failed: {}", e.getMessage());
+    //     }
+    // }
     
     // Also ping frontend to keep it awake
-    @Scheduled(fixedRate = 300000) // 5 minutes in milliseconds
-    public void keepFrontendAlive() {
-        try {
-            log.debug("Pinging frontend to keep it awake: {}", frontendUrl);
-            restTemplate.getForObject(frontendUrl, String.class);
-        } catch (Exception e) {
-            log.warn("Frontend keep-alive ping failed: {}", e.getMessage());
-        }
-    }
+    // @Scheduled(fixedRate = 300000) // 5 minutes in milliseconds
+    // public void keepFrontendAlive() {
+    //     try {
+    //         log.debug("Pinging frontend to keep it awake: {}", frontendUrl);
+    //         restTemplate.getForObject(frontendUrl, String.class);
+    //     } catch (Exception e) {
+    //         log.warn("Frontend keep-alive ping failed: {}", e.getMessage());
+    //     }
+    // }
 }

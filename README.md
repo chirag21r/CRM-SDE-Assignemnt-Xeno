@@ -5,7 +5,7 @@ Please wait for some minutes for site to load.
 
 ## What is this?
 
-I built this small CRM system as part of an internship assignment. The goal was to create a complete customer relationship management flow - from getting customer data and orders into the system, to segmenting audiences and running campaigns, with some basic analytics thrown in. I also added an AI feature that helps write campaign messages.
+I built this small CRM system . The goal was to create a complete customer relationship management flow - from getting customer data and orders into the system, to segmenting audiences and running campaigns, with some basic analytics thrown in. I also added an AI feature that helps write campaign messages.
 
 ## What it does
 
